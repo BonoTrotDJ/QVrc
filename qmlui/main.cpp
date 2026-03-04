@@ -27,6 +27,7 @@
 #include "networkmanager.h"
 #include "qlcconfig.h"
 #include "qlcfile.h"
+#include "qvrcinfo.h"
 
 QFile logFile;
 
@@ -36,9 +37,11 @@ QFile logFile;
 void printVersion()
 {
     QTextStream cout(stdout, QIODevice::WriteOnly);
+    const QString appName = QCoreApplication::applicationName().isEmpty() ? QString(APPNAME) : QCoreApplication::applicationName();
+    const QString appVersion = QCoreApplication::applicationVersion().isEmpty() ? QString(APPVERSION) : QCoreApplication::applicationVersion();
 
     cout << Qt::endl;
-    cout << APPNAME << " " << "version " << APPVERSION << Qt::endl;
+    cout << appName << " " << "version " << appVersion << Qt::endl;
     cout << "This program is licensed under the terms of the ";
     cout << "Apache 2.0 license." << Qt::endl;
     cout << "Copyright (c) Heikki Junnila (hjunnila@users.sf.net)" << Qt::endl;
@@ -58,7 +61,7 @@ int main(int argc, char *argv[])
     QApplication::setOrganizationName("qlcplus");
     QApplication::setOrganizationDomain("qlcplus.org");
     QApplication::setApplicationName(APPNAME);
-    QApplication::setApplicationVersion(QString(APPVERSION));
+    QApplication::setApplicationVersion(QVrcInfo::appVersion());
 
     printVersion();
 

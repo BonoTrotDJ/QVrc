@@ -54,6 +54,7 @@ add_library(${module_name} SHARED
     qlcpalette.cpp qlcpalette.h
     qlcphysical.cpp qlcphysical.h
     qlcpoint.cpp qlcpoint.h
+    qvrcinfo.cpp qvrcinfo.h
     rgbalgorithm.cpp rgbalgorithm.h
     rgbaudio.cpp rgbaudio.h
     rgbimage.cpp rgbimage.h

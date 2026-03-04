@@ -22,6 +22,7 @@
 #include <QLabel>
 #include <QTimer>
 #include <QAction>
+#include <QCoreApplication>
 #include <QMessageBox>
 #include <QDesktopServices>
 
@@ -38,7 +39,10 @@ AboutBox::AboutBox(QWidget* parent) : QDialog (parent)
     addAction(action);
 
     m_titleLabel->setText(APPNAME);
-    m_versionLabel->setText(APPVERSION);
+    QString version = QCoreApplication::applicationVersion();
+    if (version.isEmpty())
+        version = APPVERSION;
+    m_versionLabel->setText(version);
     m_copyrightLabel->setText(QString("Copyright &copy; <B>Heikki Junnila, Massimo Callegari</B> %1")
                               .arg(tr("and contributors:")));
     m_websiteLabel->setText(tr("Website: %1").arg("<A HREF=\"https://www.qlcplus.org/\">https://www.qlcplus.org/</A>"));

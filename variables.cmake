@@ -10,7 +10,7 @@ set(CMAKE_AUTORCC ON)
 
 add_definitions(-DUNICODE)
 
-set(APPNAME "Q Light Controller Plus")
+set(APPNAME "Q VRT Italia")
 set(FXEDNAME "Fixture Definition Editor")
 
 if(ANDROID OR IOS)
@@ -19,9 +19,9 @@ endif()
 
 if(qmlui)
     add_definitions(-DQMLUI)
-    set(APPVERSION "5.2.1 GIT")
+    set(APPVERSION "Ver. 1.0.0")
 else()
-    set(APPVERSION "4.14.4 GIT")
+    set(APPVERSION "Ver. 1.0.0")
 endif()
 
 if(UNIX)
@@ -505,4 +505,3 @@ elseif(NOT APPLE AND NOT IOS)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wextra")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
 endif()
-

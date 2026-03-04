@@ -28,7 +28,7 @@ CustomPopupDialog
 {
     id: popupRoot
     width: mainView.width / 2
-    title: qsTr("Information")
+    title: "VRClub Italy"
     standardButtons: Dialog.Close
 
     contentItem:
@@ -38,10 +38,12 @@ CustomPopupDialog
 
             Image
             {
-                source: "qrc:/qlcplus.svg"
-                width: UISettings.iconSizeDefault * 3
-                height: width
+                source: "qrc:/vrclubitaly.jpg"
+                width: UISettings.iconSizeDefault * 4
+                height: UISettings.iconSizeDefault * 3
                 sourceSize: Qt.size(width, height)
+                fillMode: Image.PreserveAspectFit
+                smooth: true
             }
 
             Text
@@ -50,12 +52,11 @@ CustomPopupDialog
                 linkColor: "#8AC800"
                 font.family: UISettings.robotoFontName
                 font.pixelSize: UISettings.textSizeDefault
-                text: "<h3>" + qlcplus.appName + "<br>" + qlcplus.appVersion + "</h3>\n" +
-                      "Copyright Ⓒ <b>Massimo Callegari, Heikki Junnila</b> " + qsTr("and contributors") + "<br>" +
-                      qsTr("Website") + ": <a href='https://www.qlcplus.org'>https://www.qlcplus.org</a><br><br>" +
-                      qsTr("This application is licensed under the terms of the") +
-                      " <a href='https://www.apache.org/licenses/LICENSE-2.0'>" +
-                      qsTr("Apache 2.0 license") + "</a>."
+                text: "<h3>VRClub Italy<br>" + qlcplus.appVersion + "</h3>\n" +
+                      "<b>Versione Visual</b><br>" +
+                      "Copyright Ⓒ <b>VRClub Italy</b><br>" +
+                      qsTr("Website") + ": <a href='https://www.vrclubitaly.it'>https://www.vrclubitaly.it</a><br>" +
+                      "Facebook" + ": <a href='https://www.facebook.com/vrclubitaly/?locale=it_IT'>vrclubitaly</a><br>"
                 onLinkActivated: (link) => Qt.openUrlExternally(link)
                 Layout.fillWidth: true
                 wrapMode: Text.WordWrap
@@ -68,17 +69,5 @@ CustomPopupDialog
                 }
             }
 
-            IconButton
-            {
-                width: UISettings.iconSizeMedium
-                height: width
-                Layout.alignment: Qt.AlignTop
-                border.width: 0
-                bgColor: "transparent"
-                imgSource: "qrc:/qt.svg"
-                tooltip: qsTr("About the Qt framework...")
-
-                onClicked: qlcplus.aboutQt()
-            }
         }
 }

@@ -8,7 +8,12 @@ set -euo pipefail
 
 which_qt() {
   local base="$1"
-  command -v "$base" 2>/dev/null || command -v "${base}-qt6" 2>/dev/null || command -v "${base}-qt5" 2>/dev/null || true
+  command -v "$base" 2>/dev/null \
+    || command -v "${base}-qt6" 2>/dev/null \
+    || command -v "${base}-qt5" 2>/dev/null \
+    || { [[ -x "/usr/lib/qt6/bin/${base}" ]] && echo "/usr/lib/qt6/bin/${base}"; } \
+    || { [[ -x "/usr/lib/qt5/bin/${base}" ]] && echo "/usr/lib/qt5/bin/${base}"; } \
+    || true
 }
 LRELEASE="$(which_qt lrelease)"
 LUPDATE="$(which_qt lupdate)"

@@ -34,6 +34,7 @@
 #include "qlcconfig.h"
 #include "qlci18n.h"
 #include "qlcfile.h"
+#include "qvrcinfo.h"
 
 #if defined(WIN32) || defined(__APPLE__)
   #include "debugbox.h"
@@ -139,9 +140,11 @@ void qlcMessageHandler(QtMsgType type, const QMessageLogContext &context, const 
 void printVersion()
 {
     QTextStream cout(stdout, QIODevice::WriteOnly);
+    const QString appName = QCoreApplication::applicationName().isEmpty() ? QString(APPNAME) : QCoreApplication::applicationName();
+    const QString appVersion = QCoreApplication::applicationVersion().isEmpty() ? QString(APPVERSION) : QCoreApplication::applicationVersion();
 
     cout << endl;
-    cout << APPNAME << " " << "version " << APPVERSION << endl;
+    cout << appName << " " << "version " << appVersion << endl;
     cout << "This program is licensed under the terms of the ";
     cout << "Apache 2.0 license." << endl;
     cout << "Copyright (c) Heikki Junnila (hjunnila@users.sf.net)" << endl;
@@ -305,6 +308,8 @@ int main(int argc, char** argv)
 {
     /* Create the Qt core application object */
     QApplication qapp(argc, argv);
+    QApplication::setApplicationName(APPNAME);
+    QApplication::setApplicationVersion(QVrcInfo::appVersion());
 
     /* At least MIDI plugin requires this so best to declare it here for everyone */
     qRegisterMetaType<QVariant>("QVariant");
