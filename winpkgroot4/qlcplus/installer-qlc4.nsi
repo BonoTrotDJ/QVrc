@@ -1,6 +1,8 @@
 ;--------------------------------
 ;Include Modern UI
   !include "MUI2.nsh"
+  !include "nsDialogs.nsh"
+  !include "LogicLib.nsh"
 
 ;--------------------------------
 ;Defines
@@ -19,6 +21,9 @@ OutFile "QVRC_QLC4_Installer.exe"
 InstallDir C:\QLC+
 InstallDirRegKey HKCU "Software\qlcplus" "Install_Dir"
 RequestExecutionLevel user
+Var DesktopShortcut
+Var Dialog
+Var CheckboxDesktop
 
 !define MUI_LICENSEPAGE_TEXT_TOP "Do you accept the following statement of the Apache 2.0 license?"
 
@@ -41,6 +46,7 @@ RequestExecutionLevel user
 ; Pages
 Page directory
 Page custom StartMenuGroupSelect "" ": Start Menu Folder"
+Page custom DesktopShortcutPageCreate DesktopShortcutPageLeave ": Desktop Shortcut"
 Page instfiles
 
 Function StartMenuGroupSelect
@@ -62,6 +68,26 @@ Function StartMenuGroupSelect
 	Pop $R1
 FunctionEnd
 
+Function DesktopShortcutPageCreate
+    nsDialogs::Create 1018
+    Pop $Dialog
+    ${If} $Dialog == error
+        Abort
+    ${EndIf}
+
+    ${NSD_CreateLabel} 0u 0u 100% 18u "Choose whether to create a desktop shortcut."
+    Pop $0
+    ${NSD_CreateCheckbox} 0u 24u 100% 12u "Create a desktop shortcut for Q Light Controller Plus"
+    Pop $CheckboxDesktop
+    ${NSD_Check} $CheckboxDesktop
+
+    nsDialogs::Show
+FunctionEnd
+
+Function DesktopShortcutPageLeave
+    ${NSD_GetState} $CheckboxDesktop $DesktopShortcut
+FunctionEnd
+
 Section
 	SetOutPath $INSTDIR
 
@@ -78,6 +104,10 @@ Section
 		CreateShortCut '$SMPROGRAMS\$R0\Uninstall.lnk' $INSTDIR\uninstall.exe
 
 	skip:
+
+	StrCmp $DesktopShortcut ${BST_CHECKED} 0 noDesktopShortcut
+		CreateShortCut '$DESKTOP\Q Light Controller Plus.lnk' $INSTDIR\qlcplus.exe
+	noDesktopShortcut:
 SectionEnd
 
 Section
@@ -140,6 +170,7 @@ Section "Uninstall"
 	RMDir /r $INSTDIR\Web
 
 	RMDir $INSTDIR
+	Delete "$DESKTOP\Q Light Controller Plus.lnk"
 
 	DeleteRegKey HKCR ".qxw"
 	DeleteRegKey HKCR "QLightControllerPlus.Document"
