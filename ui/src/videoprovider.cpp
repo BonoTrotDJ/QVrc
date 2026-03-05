@@ -26,6 +26,9 @@
 #include <QMediaPlayer>
 #include <QVideoWidget>
 #include <QScreen>
+#include <QToolButton>
+#include <QEvent>
+#include <QUrl>
 
 #include "videoprovider.h"
 #include "qlcfile.h"
@@ -78,6 +81,7 @@ VideoWidget::VideoWidget(Video *video, QObject *parent)
     , m_video(video)
     , m_videoPlayer(NULL)
     , m_videoWidget(NULL)
+    , m_closeButton(NULL)
 {
     Q_ASSERT(video != NULL);
 
@@ -95,6 +99,8 @@ VideoWidget::VideoWidget(Video *video, QObject *parent)
         m_videoWidget = new QVideoWidget;
         m_videoWidget->setStyleSheet("background-color:black;");
         m_videoPlayer->setVideoOutput(m_videoWidget);
+        m_videoWidget->installEventFilter(this);
+        ensureCloseButton();
     }
 
     connect(m_videoPlayer, SIGNAL(mediaStatusChanged(QMediaPlayer::MediaStatus)),
@@ -243,6 +249,20 @@ void VideoWidget::slotMetaDataChanged()
 
 void VideoWidget::slotPlaybackVideo()
 {
+    // Always refresh player source from the current Video function state.
+    const QString sourceURL = m_video->sourceUrl();
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+    if (sourceURL.contains("://"))
+        m_videoPlayer->setMedia(QUrl(sourceURL));
+    else
+        m_videoPlayer->setMedia(QUrl::fromLocalFile(sourceURL));
+#else
+    if (sourceURL.contains("://"))
+        m_videoPlayer->setSource(QUrl(sourceURL));
+    else
+        m_videoPlayer->setSource(QUrl::fromLocalFile(sourceURL));
+#endif
+
     int screen = m_video->screen();
     QList<QScreen*> screens = QGuiApplication::screens();
     QScreen *scr = screens.count() > screen ? screens.at(screen) : screens.first();
@@ -253,10 +273,11 @@ void VideoWidget::slotPlaybackVideo()
         m_videoWidget = new QVideoWidget;
         m_videoWidget->setStyleSheet("background-color:black;");
         m_videoPlayer->setVideoOutput(m_videoWidget);
+        m_videoWidget->installEventFilter(this);
+        ensureCloseButton();
     }
 
     m_videoWidget->setWindowFlags(m_videoWidget->windowFlags() | Qt::WindowStaysOnTopHint);
-
     if (m_video->fullscreen() == false)
     {
         QSize resolution = m_video->resolution();
@@ -284,6 +305,12 @@ void VideoWidget::slotPlaybackVideo()
         m_videoPlayer->setPosition(0);
 
     m_videoWidget->show();
+    if (m_closeButton != NULL)
+    {
+        updateCloseButtonPosition();
+        m_closeButton->show();
+        m_closeButton->raise();
+    }
     m_videoPlayer->play();
 }
 
@@ -331,6 +358,45 @@ int VideoWidget::getScreenCount()
     int screenCount = QGuiApplication::screens().count();
 
     return screenCount;
+}
+
+void VideoWidget::ensureCloseButton()
+{
+    if (m_videoWidget == NULL || m_closeButton != NULL)
+        return;
+
+    m_closeButton = new QToolButton(m_videoWidget);
+    m_closeButton->setText("x");
+    m_closeButton->setToolTip(tr("Close video"));
+    m_closeButton->setCursor(Qt::PointingHandCursor);
+    m_closeButton->setAutoRaise(false);
+    m_closeButton->setFixedSize(20, 20);
+    m_closeButton->setStyleSheet("QToolButton { background-color: rgba(198, 40, 40, 220); color: white; border: 1px solid white; font-weight: bold; }");
+    connect(m_closeButton, SIGNAL(clicked()), this, SLOT(slotStopVideo()));
+    updateCloseButtonPosition();
+    m_closeButton->hide();
+}
+
+void VideoWidget::updateCloseButtonPosition()
+{
+    if (m_videoWidget == NULL || m_closeButton == NULL)
+        return;
+
+    const int margin = 6;
+    const int x = m_videoWidget->width() - m_closeButton->width() - margin;
+    const int y = margin;
+    m_closeButton->move(qMax(0, x), qMax(0, y));
+}
+
+bool VideoWidget::eventFilter(QObject *watched, QEvent *event)
+{
+    if (watched == m_videoWidget &&
+        (event->type() == QEvent::Resize || event->type() == QEvent::Show))
+    {
+        updateCloseButtonPosition();
+    }
+
+    return QObject::eventFilter(watched, event);
 }
 
 FunctionParent VideoWidget::functionParent() const

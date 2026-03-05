@@ -28,6 +28,7 @@
 
 class Doc;
 class QVideoWidget;
+class QToolButton;
 
 class VideoWidget final : public QObject
 {
@@ -52,6 +53,11 @@ protected slots:
 
 private:
     int getScreenCount();
+    void ensureCloseButton();
+    void updateCloseButtonPosition();
+
+protected:
+    bool eventFilter(QObject *watched, QEvent *event) override;
 
 protected:
     /** reference to the actual Video Function */
@@ -60,6 +66,8 @@ protected:
     QMediaPlayer *m_videoPlayer;
     /** Qt widget that actually displays the video */
     QVideoWidget *m_videoWidget;
+    /** small close button overlayed on the video window */
+    QToolButton *m_closeButton;
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
     QAudioOutput *m_audioOutput;
 #endif
