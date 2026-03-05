@@ -100,6 +100,7 @@ private:
     QDir m_workingDirectory;
     bool m_overscan;
     bool m_noGui;
+    bool m_closePending = false;
 
     /*********************************************************************
      * Progress dialog

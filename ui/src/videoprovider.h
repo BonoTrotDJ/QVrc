@@ -36,6 +36,7 @@ class VideoWidget final : public QObject
 
 public:
     VideoWidget(Video *video, QObject *parent = NULL);
+    void shutdown();
 
 protected slots:
     void slotSourceUrlChanged(QString url);
@@ -82,6 +83,7 @@ class VideoProvider final : public QObject
 public:
     VideoProvider(Doc *doc, QObject *parent);
     ~VideoProvider();
+    void shutdown();
 
 protected slots:
     void slotFunctionAdded(quint32 id);

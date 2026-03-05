@@ -47,6 +47,18 @@ VideoProvider::VideoProvider(Doc *doc, QObject *parent)
 
 VideoProvider::~VideoProvider()
 {
+    shutdown();
+}
+
+void VideoProvider::shutdown()
+{
+    for (VideoWidget *vw : std::as_const(m_videoMap))
+    {
+        if (vw != NULL)
+            vw->shutdown();
+    }
+
+    qDeleteAll(m_videoMap);
     m_videoMap.clear();
 }
 
@@ -139,6 +151,26 @@ VideoWidget::VideoWidget(Video *video, QObject *parent)
         m_videoPlayer->setSource(QUrl::fromLocalFile(sourceURL));
 #endif
     qDebug() << "Video source URL:" << sourceURL;
+}
+
+void VideoWidget::shutdown()
+{
+    if (m_videoPlayer != NULL)
+        m_videoPlayer->stop();
+
+    if (m_videoWidget != NULL)
+    {
+        if (m_video->fullscreen())
+            m_videoWidget->setFullScreen(false);
+
+        m_videoWidget->hide();
+        m_videoWidget->close();
+        m_videoWidget->deleteLater();
+        m_videoWidget = NULL;
+        m_closeButton = NULL;
+    }
+
+    m_video->stop(functionParent());
 }
 
 void VideoWidget::slotSourceUrlChanged(QString url)

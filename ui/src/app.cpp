@@ -393,6 +393,22 @@ void App::disableTimerResolutionThrottling()
 
 void App::closeEvent(QCloseEvent* e)
 {
+    if (m_closePending == true)
+    {
+        if (m_doc->masterTimer()->runningFunctions() > 0)
+        {
+            e->ignore();
+            return;
+        }
+
+        if (m_videoProvider != NULL)
+            m_videoProvider->shutdown();
+
+        m_closePending = false;
+        e->accept();
+        return;
+    }
+
     if (m_doc->mode() == Doc::Operate && m_doc->isKiosk() == false)
     {
         QMessageBox::warning(this,
@@ -408,7 +424,17 @@ void App::closeEvent(QCloseEvent* e)
         if (saveModifiedDoc(tr("Close"), tr("Do you wish to save the current workspace " \
                                             "before closing the application?")) == true)
         {
+            if (m_videoProvider != NULL)
+                m_videoProvider->shutdown();
+
             m_doc->masterTimer()->stopAllFunctions();
+            if (m_doc->masterTimer()->runningFunctions() > 0)
+            {
+                m_closePending = true;
+                e->ignore();
+                return;
+            }
+
             e->accept();
         }
         else
@@ -430,7 +456,17 @@ void App::closeEvent(QCloseEvent* e)
             }
         }
 
+        if (m_videoProvider != NULL)
+            m_videoProvider->shutdown();
+
         m_doc->masterTimer()->stopAllFunctions();
+        if (m_doc->masterTimer()->runningFunctions() > 0)
+        {
+            m_closePending = true;
+            e->ignore();
+            return;
+        }
+
         e->accept();
     }
 }
@@ -1174,6 +1210,9 @@ void App::slotRunningFunctionsChanged()
         m_controlPanicAction->setEnabled(true);
     else
         m_controlPanicAction->setEnabled(false);
+
+    if (m_closePending == true && m_doc->masterTimer()->runningFunctions() == 0)
+        QMetaObject::invokeMethod(this, "close", Qt::QueuedConnection);
 }
 
 void App::slotDumpDmxIntoFunction()
