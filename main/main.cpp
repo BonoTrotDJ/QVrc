@@ -365,6 +365,8 @@ static bool showStartupOpenWorkspaceDialog(App &app)
         if (error == QFile::NoError && app.fileName().isEmpty() == false && app.fileName() != previousFile)
         {
             app.slotGoToVirtualConsole();
+            if (VirtualConsole::instance() != NULL && VirtualConsole::instance()->dockArea() != NULL)
+                VirtualConsole::instance()->dockArea()->hide();
             dialog.allowClose(true);
             dialog.accept();
         }
@@ -446,7 +448,7 @@ int main(int argc, char** argv)
         app.slotGoToVirtualConsole();
         app.enableKioskMode();
         if (VirtualConsole::instance() != NULL && VirtualConsole::instance()->dockArea() != NULL)
-            VirtualConsole::instance()->dockArea()->setGrandMasterVisible(false);
+            VirtualConsole::instance()->dockArea()->hide();
 
         if (showStartupOpenWorkspaceDialog(app) == false)
             return 0;
