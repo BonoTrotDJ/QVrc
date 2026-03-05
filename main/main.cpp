@@ -594,25 +594,34 @@ static bool showStartupOpenWorkspaceDialog(App &app)
 
 static void ensureKnownFixtureDefinitionAvailable()
 {
-    const QString manufacturer = QStringLiteral("Varytec");
     const QString fixtureFilename = QStringLiteral("Varytec-Colors-NerveStrobe-HP.qxf");
 
     QDir userFixturesDir = QLCFixtureDefCache::userDefinitionDirectory();
-    const QString userManufacturerDirPath = userFixturesDir.absoluteFilePath(manufacturer);
-    QDir userManufacturerDir(userManufacturerDirPath);
-    if (userManufacturerDir.exists() == false)
-        userFixturesDir.mkpath(manufacturer);
-
-    const QString userFixturePath = userManufacturerDirPath + QDir::separator() + fixtureFilename;
+    const QString userFixturePath = userFixturesDir.absoluteFilePath(fixtureFilename);
     if (QFile::exists(userFixturePath))
         return;
 
-    QDir systemFixturesDir = QLCFixtureDefCache::systemDefinitionDirectory();
-    const QString systemFixturePath = systemFixturesDir.absoluteFilePath(manufacturer + QDir::separator() + fixtureFilename);
-    if (QFile::exists(systemFixturePath) == false)
-        return;
+    QStringList sourceCandidates;
 
-    QFile::copy(systemFixturePath, userFixturePath);
+    // 1) Installed system fixtures path
+    QDir systemFixturesDir = QLCFixtureDefCache::systemDefinitionDirectory();
+    sourceCandidates << systemFixturesDir.absoluteFilePath(QStringLiteral("Varytec") + QDir::separator() + fixtureFilename);
+
+    // 2) Source tree / build tree common relative locations
+    const QString appDir = QApplication::applicationDirPath();
+    sourceCandidates << QDir(appDir).absoluteFilePath("../resources/fixtures/Varytec/" + fixtureFilename);
+    sourceCandidates << QDir(appDir).absoluteFilePath("../../resources/fixtures/Varytec/" + fixtureFilename);
+    sourceCandidates << QDir::current().absoluteFilePath("resources/fixtures/Varytec/" + fixtureFilename);
+
+    for (const QString &candidate : sourceCandidates)
+    {
+        if (QFile::exists(candidate) == false)
+            continue;
+
+        QFile::copy(candidate, userFixturePath);
+        if (QFile::exists(userFixturePath))
+            return;
+    }
 }
 
 /**
