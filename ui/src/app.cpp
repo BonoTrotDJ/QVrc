@@ -536,7 +536,7 @@ void App::initDoc()
     m_doc = new Doc(this);
 
     connect(m_doc, SIGNAL(modified(bool)), this, SLOT(slotDocModified(bool)));
-    connect(m_doc, SIGNAL(needAutosave()), this, SLOT(slotDocAutosave()));
+    // Autosave disabled by request.
     connect(m_doc, SIGNAL(modeChanged(Doc::Mode)), this, SLOT(slotModeChanged(Doc::Mode)));
 #ifdef DEBUG_SPEED
     speedTime.start();
