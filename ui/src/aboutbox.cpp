@@ -23,7 +23,6 @@
 #include <QTimer>
 #include <QAction>
 #include <QCoreApplication>
-#include <QMessageBox>
 #include <QDesktopServices>
 
 #include "qlcconfig.h"
@@ -48,8 +47,6 @@ AboutBox::AboutBox(QWidget* parent) : QDialog (parent)
     m_websiteLabel->setText(tr("Website: %1").arg("<A HREF=\"https://www.qlcplus.org/\">https://www.qlcplus.org/</A>"));
     connect(m_websiteLabel, SIGNAL(linkActivated(QString)),
             this, SLOT(slotWebsiteClicked()));
-    connect(m_qtButton, SIGNAL(clicked()),
-            this, SLOT(slotAboutQt()));
 
     connect(m_contributors, SIGNAL(itemClicked(QListWidgetItem*)),
             this, SLOT(slotItemClicked()));
@@ -124,9 +121,4 @@ void AboutBox::slotItemClicked()
 void AboutBox::slotWebsiteClicked()
 {
     QDesktopServices::openUrl(QUrl("https://www.qlcplus.org/"));
-}
-
-void AboutBox::slotAboutQt()
-{
-    QMessageBox::aboutQt(this, QString(APPNAME));
 }

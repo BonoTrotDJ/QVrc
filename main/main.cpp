@@ -642,6 +642,10 @@ static void installStartupSettingsMenu(App &app)
     settingsMenu->addAction(settingsAction);
 
     settingsMenu->addSeparator();
+    QAction *aboutAction = new QAction(QIcon(":/help.png"), QObject::tr("Chi siamo"), &app);
+    QObject::connect(aboutAction, &QAction::triggered, &app, &App::slotHelpAbout);
+    settingsMenu->addAction(aboutAction);
+
     QAction *exitAction = new QAction(QIcon(":/exit.png"), QObject::tr("Esci"), &app);
     QObject::connect(exitAction, &QAction::triggered, &app, &QWidget::close);
     settingsMenu->addAction(exitAction);
