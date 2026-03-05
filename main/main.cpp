@@ -423,6 +423,7 @@ static bool showStartupOpenWorkspaceDialog(App &app, bool forceDialog = false)
     // This is skipped when the dialog is explicitly requested (e.g. F1).
     StartupSettings startupSettings = readStartupSettings();
     const QString storedStartupWorkspace = startupSettings.workspacePath;
+    bool showStoredWorkspaceError = false;
     if (forceDialog == false && storedStartupWorkspace.isEmpty() == false)
     {
         if (openWorkspaceAndCloseStartup(storedStartupWorkspace))
@@ -430,10 +431,7 @@ static bool showStartupOpenWorkspaceDialog(App &app, bool forceDialog = false)
 
         startupSettings.workspacePath.clear();
         saveStartupSettings(startupSettings);
-
-        QMessageBox::warning(&app,
-                             QObject::tr("Errore"),
-                             QObject::tr("Il file di avvio selezionato non esiste più o non è apribile.\nSeleziona una nuova cartella/file."));
+        showStoredWorkspaceError = true;
     }
 
     auto workspaceFilesFromFolder = [](const QString &folderPath) -> QStringList
@@ -494,16 +492,34 @@ static bool showStartupOpenWorkspaceDialog(App &app, bool forceDialog = false)
     });
 
     QString selectedFolder = startupSettings.folderPath;
-    auto refreshWorkspaceList = [&selectedFolder, &workspaceFilesFromFolder, folderLabel, filesList]() {
+    bool missingFolderAlertShown = false;
+    auto refreshWorkspaceList = [&selectedFolder, &workspaceFilesFromFolder, folderLabel, filesList,
+                                 &dialog, &missingFolderAlertShown]() {
         filesList->clear();
 
         if (selectedFolder.isEmpty())
         {
             folderLabel->setText(QObject::tr("Nessuna cartella selezionata."));
+            missingFolderAlertShown = false;
+            return;
+        }
+
+        QDir selectedDir(selectedFolder);
+        if (selectedDir.exists() == false)
+        {
+            folderLabel->setText(QObject::tr("Cartella non trovata: %1").arg(selectedFolder));
+            if (missingFolderAlertShown == false)
+            {
+                QMessageBox::warning(&dialog,
+                                     QObject::tr("Errore"),
+                                     QObject::tr("La cartella selezionata non esiste più.\nSeleziona una nuova cartella."));
+                missingFolderAlertShown = true;
+            }
             return;
         }
 
         folderLabel->setText(selectedFolder);
+        missingFolderAlertShown = false;
 
         const QStringList workspaceFiles = workspaceFilesFromFolder(selectedFolder);
         for (const QString &workspaceFile : workspaceFiles)
@@ -556,7 +572,8 @@ static bool showStartupOpenWorkspaceDialog(App &app, bool forceDialog = false)
                                                                     &selectedFolder,
                                                                     &startupSettings,
                                                                     &saveStartupSettings,
-                                                                    &refreshWorkspaceList]() {
+                                                                    &refreshWorkspaceList,
+                                                                    &missingFolderAlertShown]() {
         QString initialFolder = selectedFolder;
         if (initialFolder.isEmpty())
             initialFolder = QDir::homePath();
@@ -571,6 +588,7 @@ static bool showStartupOpenWorkspaceDialog(App &app, bool forceDialog = false)
             return;
 
         selectedFolder = newFolder;
+        missingFolderAlertShown = false;
         startupSettings.folderPath = selectedFolder;
         // force a new explicit selection from the refreshed list
         startupSettings.workspacePath.clear();
@@ -595,6 +613,13 @@ static bool showStartupOpenWorkspaceDialog(App &app, bool forceDialog = false)
     {
         const QRect screenGeometry = targetScreen->availableGeometry();
         dialog.move(screenGeometry.center() - dialog.rect().center());
+    }
+
+    if (showStoredWorkspaceError)
+    {
+        QMessageBox::warning(&dialog,
+                             QObject::tr("Errore"),
+                             QObject::tr("Il file di avvio selezionato non esiste più o non è apribile.\nSeleziona una nuova cartella/file."));
     }
 
     return dialog.exec() == QDialog::Accepted;
