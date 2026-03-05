@@ -20,7 +20,7 @@
 #ifndef WIN32MIDIENUMERATORPRIVATE_H
 #define WIN32MIDIENUMERATORPRIVATE_H
 
-#include <Windows.h>
+#include <windows.h>
 #include <QObject>
 #include <QList>
 

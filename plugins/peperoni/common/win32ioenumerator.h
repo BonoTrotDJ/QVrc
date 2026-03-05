@@ -20,7 +20,7 @@
 #ifndef WIN32IOENUMERATOR_H
 #define WIN32IOENUMERATOR_H
 
-#include <Windows.h>
+#include <windows.h>
 #include <QVariant>
 #include <QObject>
 

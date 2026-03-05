@@ -19,7 +19,7 @@
 
 #if defined(WIN32) || defined(Q_OS_WIN)
 #   define WIN32_LEAN_AND_MEAN
-#   include <Windows.h>
+#   include <windows.h>
 #else
 #   include <unistd.h>
 #endif

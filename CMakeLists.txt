@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 project(qlcplus VERSION 4.14.2 LANGUAGES C CXX)
 
-option(qmlui "Build for QLC+ 5 QML UI" OFF)
+option(qmlui "Build for QLC+ 5 QML UI" ON)
 
 # Set Release build type by default
 if(NOT CMAKE_BUILD_TYPE)

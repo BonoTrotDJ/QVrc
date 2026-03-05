@@ -145,6 +145,7 @@ public slots:
     void slotModeDesign();
     void slotModeToggle();
     void slotModeChanged(Doc::Mode mode);
+    void slotGoToVirtualConsole();
 
     /*********************************************************************
      * Actions and toolbar

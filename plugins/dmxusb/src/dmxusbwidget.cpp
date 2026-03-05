@@ -36,7 +36,7 @@
 #include "usbdmxlegacy.h"
 
 #if defined(WIN32) || defined(Q_OS_WIN)
-#include <Windows.h>
+#include <windows.h>
 #define DMXUSB_WINDOWSTIMERRESOLUTION "dmxusb/windowstimerresolution"
 #endif
 

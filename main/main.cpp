@@ -30,11 +30,16 @@
 #include <QTimer>
 #include <QHash>
 #include <QDir>
+#include <QDialog>
+#include <QPushButton>
+#include <QVBoxLayout>
+#include <QCloseEvent>
 
 #include "qlcconfig.h"
 #include "qlci18n.h"
 #include "qlcfile.h"
 #include "qvrcinfo.h"
+#include "vcdockarea.h"
 
 #if defined(WIN32) || defined(__APPLE__)
   #include "debugbox.h"
@@ -298,6 +303,85 @@ bool parseArgs()
     return true;
 }
 
+class MandatoryStartupDialog final : public QDialog
+{
+public:
+    explicit MandatoryStartupDialog(QWidget *parent = nullptr)
+        : QDialog(parent)
+        , m_allowClose(false)
+    {
+    }
+
+    void allowClose(bool enable)
+    {
+        m_allowClose = enable;
+    }
+
+protected:
+    void closeEvent(QCloseEvent *event) override
+    {
+        if (m_allowClose == false)
+        {
+            event->ignore();
+            return;
+        }
+        QDialog::closeEvent(event);
+    }
+
+    void reject() override
+    {
+        if (m_allowClose == false)
+            return;
+        QDialog::reject();
+    }
+
+private:
+    bool m_allowClose;
+};
+
+static bool showStartupOpenWorkspaceDialog(App &app)
+{
+    MandatoryStartupDialog dialog(&app);
+    dialog.setWindowTitle(QObject::tr("Documento Avvio"));
+    dialog.setModal(true);
+    dialog.setWindowFlags(Qt::Dialog | Qt::CustomizeWindowHint | Qt::WindowTitleHint);
+
+    QVBoxLayout *layout = new QVBoxLayout(&dialog);
+    layout->setContentsMargins(20, 18, 20, 18);
+    layout->setSpacing(12);
+
+    QPushButton *openButton = new QPushButton(QObject::tr("Apri Docuemnto"), &dialog);
+    openButton->setDefault(true);
+    openButton->setAutoDefault(true);
+    layout->addWidget(openButton, 0, Qt::AlignCenter);
+
+    QPushButton *exitButton = new QPushButton(QObject::tr("Esci"), &dialog);
+    exitButton->setStyleSheet(QStringLiteral("QPushButton { background-color: #c62828; color: white; font-weight: 600; }"));
+    layout->addWidget(exitButton, 0, Qt::AlignCenter);
+
+    QObject::connect(openButton, &QPushButton::clicked, [&app, &dialog]() {
+        const QString previousFile = app.fileName();
+        const QFile::FileError error = app.slotFileOpen();
+        if (error == QFile::NoError && app.fileName().isEmpty() == false && app.fileName() != previousFile)
+        {
+            app.slotGoToVirtualConsole();
+            dialog.allowClose(true);
+            dialog.accept();
+        }
+    });
+
+    QObject::connect(exitButton, &QPushButton::clicked, [&dialog]() {
+        dialog.allowClose(true);
+        dialog.setResult(QDialog::Rejected);
+        dialog.close();
+    });
+
+    dialog.adjustSize();
+    const QRect mainWindowGeometry = app.frameGeometry();
+    dialog.move(mainWindowGeometry.center() - dialog.rect().center());
+    return dialog.exec() == QDialog::Accepted;
+}
+
 /**
  * THE entry point for the application
  *
@@ -356,6 +440,16 @@ int main(int argc, char** argv)
     {
         if (app.loadXML(QLCArgs::workspace) == QFile::NoError)
             app.updateFileOpenMenu(QLCArgs::workspace);
+    }
+    else
+    {
+        app.slotGoToVirtualConsole();
+        app.enableKioskMode();
+        if (VirtualConsole::instance() != NULL && VirtualConsole::instance()->dockArea() != NULL)
+            VirtualConsole::instance()->dockArea()->setGrandMasterVisible(false);
+
+        if (showStartupOpenWorkspaceDialog(app) == false)
+            return 0;
     }
     if (QLCArgs::operate == true)
         app.slotModeOperate();

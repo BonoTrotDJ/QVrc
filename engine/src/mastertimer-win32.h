@@ -21,7 +21,7 @@
 #ifndef MASTERTIMER_PRIVATE_H
 #define MASTERTIMER_PRIVATE_H
 
-#include <Windows.h>
+#include <windows.h>
 
 class MasterTimer;
 

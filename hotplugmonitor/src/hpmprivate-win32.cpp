@@ -24,8 +24,8 @@
   #define WINVER 0x05000000
 #endif
 
-#include <Windows.h>
-#include <Dbt.h>
+#include <windows.h>
+#include <dbt.h>
 
 #include <QtCore>
 #include <QDebug>

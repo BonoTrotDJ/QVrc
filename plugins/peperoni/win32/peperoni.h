@@ -20,7 +20,7 @@
 #ifndef PEPERONI_H
 #define PEPERONI_H
 
-#include <Windows.h>
+#include <windows.h>
 
 #include <QStringList>
 #include <QtPlugin>

@@ -49,6 +49,7 @@ coverage/
 
 # Development IDEs
 .vscode/
+.qtwin/
 
 # CMake build
 CMakeLists.txt.user

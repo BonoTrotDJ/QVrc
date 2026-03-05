@@ -20,7 +20,7 @@
 #ifndef PEPERONIDEVICE_H
 #define PEPERONIDEVICE_H
 
-#include <Windows.h>
+#include <windows.h>
 #include <QObject>
 #include <QMutex>
 

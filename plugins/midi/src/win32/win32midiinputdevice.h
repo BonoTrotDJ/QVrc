@@ -20,7 +20,7 @@
 #ifndef WIN32MIDIINPUTDEVICE_H
 #define WIN32MIDIINPUTDEVICE_H
 
-#include <Windows.h>
+#include <windows.h>
 #include <QObject>
 
 #include "midiinputdevice.h"

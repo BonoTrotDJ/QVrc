@@ -12,14 +12,16 @@ function(copy_system_library target libname)
 		list(APPEND ${target} ${SYS_LIBS_PATH}/${libname})
 		set(${target} "${${target}}" PARENT_SCOPE)
     else()
-        message(FATAL_ERROR "ERROR: missing DLL detected: ${libname}")
+        message(WARNING "Missing optional system DLL: ${libname} (searched in ${SYS_LIBS_PATH})")
 	endif()
 endfunction()
 
 # MSYS2 libraries
 set(msys_path "${INSTALLROOT}/${LIBSDIR}")
 copy_system_library(msys_files "libusb-1.0.dll")
-install(FILES ${msys_files} DESTINATION ${msys_path})
+if(msys_files)
+    install(FILES ${msys_files} DESTINATION ${msys_path})
+endif()
 
 # audio libraries
 set(mmedia_path "${INSTALLROOT}/${LIBSDIR}")
@@ -32,8 +34,9 @@ copy_system_library(mmedia_files "libvorbisenc-2.dll")
 copy_system_library(mmedia_files "libFLAC.dll")
 copy_system_library(mmedia_files "libsndfile-1.dll")
 copy_system_library(mmedia_files "libfftw3-3.dll")
-
-install(FILES ${mmedia_files} DESTINATION ${mmedia_path})
+if(mmedia_files)
+    install(FILES ${mmedia_files} DESTINATION ${mmedia_path})
+endif()
 
 # NullSoft installer files
 set(nsis_path "${INSTALLROOT}/${DATADIR}")

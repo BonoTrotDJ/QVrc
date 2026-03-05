@@ -20,7 +20,7 @@
 #ifndef HPMPRIVATE_WIN32_H
 #define HPMPRIVATE_WIN32_H
 
-#include <Windows.h>
+#include <windows.h>
 #include <QObject>
 #include <qwindowdefs.h>
 

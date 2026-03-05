@@ -20,7 +20,7 @@
 #ifndef WIN32PEPERONIDEVICE_H
 #define WIN32PEPERONIDEVICE_H
 
-#include <Windows.h>
+#include <windows.h>
 #include <QObject>
 
 #include "outputdevice.h"

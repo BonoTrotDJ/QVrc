@@ -408,6 +408,7 @@ void App::closeEvent(QCloseEvent* e)
         if (saveModifiedDoc(tr("Close"), tr("Do you wish to save the current workspace " \
                                             "before closing the application?")) == true)
         {
+            m_doc->masterTimer()->stopAllFunctions();
             e->accept();
         }
         else
@@ -429,6 +430,7 @@ void App::closeEvent(QCloseEvent* e)
             }
         }
 
+        m_doc->masterTimer()->stopAllFunctions();
         e->accept();
     }
 }
@@ -642,6 +644,11 @@ void App::slotModeToggle()
         slotModeOperate();
     else
         slotModeDesign();
+}
+
+void App::slotGoToVirtualConsole()
+{
+    setActiveWindow(VirtualConsole::staticMetaObject.className());
 }
 
 void App::slotModeChanged(Doc::Mode mode)

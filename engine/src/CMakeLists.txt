@@ -138,7 +138,7 @@ else()
     target_link_libraries(${module_name} PUBLIC Qt${QT_MAJOR_VERSION}::Script)
 endif()
 
-if(qmlui)
+if(qmlui OR (QT_VERSION_MAJOR GREATER 5))
     target_sources(${module_name} PRIVATE
         scriptrunner.cpp scriptrunner.h
         scriptv4.cpp scriptv4.h
