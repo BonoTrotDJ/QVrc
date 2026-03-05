@@ -44,6 +44,9 @@
 #include <QLabel>
 #include <QCheckBox>
 #include <QShortcut>
+#include <QMenuBar>
+#include <QMenu>
+#include <QAction>
 
 #include "qlcconfig.h"
 #include "qlci18n.h"
@@ -597,42 +600,17 @@ static bool showStartupOpenWorkspaceDialog(App &app, bool forceDialog = false)
     return dialog.exec() == QDialog::Accepted;
 }
 
-static void ensureStartupSettingsControls(App &app)
+static void installStartupSettingsMenu(App &app)
 {
-    QWidget *vcContents = nullptr;
-    if (VirtualConsole::instance() != nullptr)
-        vcContents = VirtualConsole::instance()->contents();
-
-    if (vcContents == nullptr)
-        return;
-
-    QPushButton *settingsButton = vcContents->findChild<QPushButton *>("startupSettingsButton");
-    if (settingsButton == nullptr)
-    {
-        settingsButton = new QPushButton(QStringLiteral("[F1] Settaggio"), vcContents);
-        settingsButton->setObjectName(QStringLiteral("startupSettingsButton"));
-        settingsButton->setGeometry(8, 8, 150, 34);
-        settingsButton->setStyleSheet(QStringLiteral("QPushButton { background-color: #1e88e5; color: white; font-weight: 600; }"));
-        QObject::connect(settingsButton, &QPushButton::clicked, [&app]() {
-            showStartupOpenWorkspaceDialog(app, true);
-        });
-    }
-    else
-    {
-        settingsButton->setText(QStringLiteral("[F1] Settaggio"));
-    }
-
-    settingsButton->show();
-    settingsButton->raise();
-}
-
-static void installStartupSettingsShortcut(App &app)
-{
-    QShortcut *settingsShortcut = new QShortcut(QKeySequence(Qt::Key_F1), &app);
-    settingsShortcut->setContext(Qt::ApplicationShortcut);
-    QObject::connect(settingsShortcut, &QShortcut::activated, [&app]() {
+    QMenuBar *menuBar = app.menuBar();
+    QMenu *settingsMenu = menuBar->addMenu(QObject::tr("Settaggio"));
+    QAction *settingsAction = new QAction(QStringLiteral("[F1] Settaggio"), &app);
+    settingsAction->setShortcut(QKeySequence(Qt::Key_F1));
+    settingsAction->setShortcutContext(Qt::ApplicationShortcut);
+    QObject::connect(settingsAction, &QAction::triggered, [&app]() {
         showStartupOpenWorkspaceDialog(app, true);
     });
+    settingsMenu->addAction(settingsAction);
 }
 
 static void ensureKnownFixtureDefinitionAvailable()
@@ -723,13 +701,12 @@ int main(int argc, char** argv)
     app.startup();
     app.show();
     app.showMaximized();
-    installStartupSettingsShortcut(app);
+    installStartupSettingsMenu(app);
 
     if (QLCArgs::workspace.isEmpty() == false)
     {
         if (app.loadXML(QLCArgs::workspace) == QFile::NoError)
             app.updateFileOpenMenu(QLCArgs::workspace);
-        ensureStartupSettingsControls(app);
     }
     else
     {
@@ -740,8 +717,6 @@ int main(int argc, char** argv)
 
         if (showStartupOpenWorkspaceDialog(app) == false)
             return 0;
-
-        ensureStartupSettingsControls(app);
     }
     if (QLCArgs::operate == true)
         app.slotModeOperate();
