@@ -36,6 +36,10 @@
 #include <QPainter>
 #include <QScreen>
 #include <QFileInfo>
+#include <QDir>
+#include <QFile>
+#include <QTextStream>
+#include <QStandardPaths>
 #include <unistd.h>
 
 #include "app.h"
@@ -71,6 +75,19 @@
 #define KXMLQLCWorkspaceWindow QStringLiteral("CurrentWindow")
 
 #define MAX_RECENT_FILES    10
+
+static QString workspaceFolderStoreFilePath()
+{
+    QString configPath = QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation);
+    if (configPath.isEmpty())
+        configPath = QDir::homePath() + QDir::separator() + ".qlcplus";
+
+    QDir configDir(configPath);
+    if (configDir.exists() == false)
+        configDir.mkpath(".");
+
+    return configDir.filePath("startup_workspace_folder.txt");
+}
 
 App::App()
     : QQuickView()
@@ -711,6 +728,66 @@ void App::setWorkingPath(QString workingPath)
     settings.setValue(SETTINGS_WORKINGPATH, m_workingPath);
 
     emit workingPathChanged(strippedPath);
+}
+
+QString App::storedWorkspaceFolder() const
+{
+    QFile file(workspaceFolderStoreFilePath());
+    if (file.open(QIODevice::ReadOnly | QIODevice::Text) == false)
+        return QString();
+
+    QTextStream stream(&file);
+    QString path = stream.readLine().trimmed();
+    if (path.isEmpty())
+        return QString();
+
+    QDir dir(path);
+    if (dir.exists() == false)
+        return QString();
+
+    return dir.absolutePath();
+}
+
+bool App::setStoredWorkspaceFolder(const QString &folderPath)
+{
+    QString localFolderPath = folderPath;
+    if (localFolderPath.startsWith("file:"))
+        localFolderPath = QUrl(localFolderPath).toLocalFile();
+
+    QDir dir(localFolderPath);
+    if (dir.exists() == false)
+        return false;
+
+    setWorkingPath(dir.absolutePath());
+
+    QFile file(workspaceFolderStoreFilePath());
+    if (file.open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::Truncate) == false)
+        return false;
+
+    QTextStream stream(&file);
+    stream << dir.absolutePath() << Qt::endl;
+    return true;
+}
+
+QStringList App::workspaceFilesInFolder(const QString &folderPath) const
+{
+    QString localFolderPath = folderPath;
+    if (localFolderPath.startsWith("file:"))
+        localFolderPath = QUrl(localFolderPath).toLocalFile();
+
+    QDir dir(localFolderPath);
+    if (dir.exists() == false)
+        return QStringList();
+
+    QStringList files;
+    QFileInfoList entries = dir.entryInfoList(QDir::Files | QDir::NoDotAndDotDot, QDir::Name);
+    for (const QFileInfo &entry : entries)
+    {
+        if (entry.suffix().compare("qxw", Qt::CaseInsensitive) == 0)
+            files.append(entry.absoluteFilePath());
+    }
+
+    return files;
 }
 
 bool App::newWorkspace()

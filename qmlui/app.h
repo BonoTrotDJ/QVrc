@@ -321,6 +321,15 @@ public:
     QString workingPath() const;
     void setWorkingPath(QString workingPath);
 
+    /** Retrieve a previously stored startup folder path from a text file */
+    Q_INVOKABLE QString storedWorkspaceFolder() const;
+
+    /** Persist a startup folder path to a text file */
+    Q_INVOKABLE bool setStoredWorkspaceFolder(const QString &folderPath);
+
+    /** Return all .qxw files from the provided folder path */
+    Q_INVOKABLE QStringList workspaceFilesInFolder(const QString &folderPath) const;
+
     /** Reset everything and start a new workspace */
     Q_INVOKABLE bool newWorkspace();
 

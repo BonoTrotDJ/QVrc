@@ -34,6 +34,13 @@
 #include <QPushButton>
 #include <QVBoxLayout>
 #include <QCloseEvent>
+#include <QFileDialog>
+#include <QListWidget>
+#include <QMessageBox>
+#include <QStandardPaths>
+#include <QScreen>
+#include <QFileInfo>
+#include <QFile>
 
 #include "qlcconfig.h"
 #include "qlci18n.h"
@@ -341,6 +348,70 @@ private:
 
 static bool showStartupOpenWorkspaceDialog(App &app)
 {
+    auto startupFolderStoreFilePath = []() -> QString
+    {
+        QString configPath = QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation);
+        if (configPath.isEmpty())
+            configPath = QDir::homePath() + QDir::separator() + ".qlcplus";
+
+        QDir configDir(configPath);
+        if (configDir.exists() == false)
+            configDir.mkpath(".");
+
+        return configDir.filePath("startup_workspace_folder.txt");
+    };
+
+    auto readStoredWorkspaceFolder = [&startupFolderStoreFilePath]() -> QString
+    {
+        QFile file(startupFolderStoreFilePath());
+        if (file.open(QIODevice::ReadOnly | QIODevice::Text) == false)
+            return QString();
+
+        QTextStream stream(&file);
+        const QString path = stream.readLine().trimmed();
+        if (path.isEmpty() == true)
+            return QString();
+
+        QDir dir(path);
+        if (dir.exists() == false)
+            return QString();
+
+        return dir.absolutePath();
+    };
+
+    auto saveStoredWorkspaceFolder = [&startupFolderStoreFilePath](const QString &folderPath) -> bool
+    {
+        QDir folder(folderPath);
+        if (folder.exists() == false)
+            return false;
+
+        QFile file(startupFolderStoreFilePath());
+        if (file.open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::Truncate) == false)
+            return false;
+
+        QTextStream stream(&file);
+        stream << folder.absolutePath() << '\n';
+        return true;
+    };
+
+    auto workspaceFilesFromFolder = [](const QString &folderPath) -> QStringList
+    {
+        QDir folder(folderPath);
+        if (folder.exists() == false)
+            return QStringList();
+
+        folder.setFilter(QDir::Files | QDir::NoDotAndDotDot);
+        folder.setSorting(QDir::Name);
+        folder.setNameFilters(QStringList() << "*.qxw" << "*.QXW");
+
+        QStringList files;
+        const QFileInfoList entries = folder.entryInfoList();
+        for (const QFileInfo &entry : entries)
+            files << entry.absoluteFilePath();
+
+        return files;
+    };
+
     MandatoryStartupDialog dialog(&app);
     dialog.setWindowTitle(QObject::tr("Documento Avvio"));
     dialog.setModal(true);
@@ -353,7 +424,11 @@ static bool showStartupOpenWorkspaceDialog(App &app)
     QPushButton *openButton = new QPushButton(QObject::tr("Apri Docuemnto"), &dialog);
     openButton->setDefault(true);
     openButton->setAutoDefault(true);
+    openButton->setVisible(false);
     layout->addWidget(openButton, 0, Qt::AlignCenter);
+
+    QPushButton *directoryFilesButton = new QPushButton(QObject::tr("Directori Files"), &dialog);
+    layout->addWidget(directoryFilesButton, 0, Qt::AlignCenter);
 
     QPushButton *exitButton = new QPushButton(QObject::tr("Esci"), &dialog);
     exitButton->setStyleSheet(QStringLiteral("QPushButton { background-color: #c62828; color: white; font-weight: 600; }"));
@@ -378,9 +453,100 @@ static bool showStartupOpenWorkspaceDialog(App &app)
         dialog.close();
     });
 
+    QObject::connect(directoryFilesButton, &QPushButton::clicked, [&app, &dialog,
+                                                                    &readStoredWorkspaceFolder,
+                                                                    &saveStoredWorkspaceFolder,
+                                                                    &workspaceFilesFromFolder]() {
+        QString initialFolder = readStoredWorkspaceFolder();
+        if (initialFolder.isEmpty())
+            initialFolder = QDir::homePath();
+
+        const QString selectedFolder = QFileDialog::getExistingDirectory(
+            &dialog,
+            QObject::tr("Seleziona cartella workspace"),
+            initialFolder,
+            QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
+
+        if (selectedFolder.isEmpty())
+            return;
+
+        saveStoredWorkspaceFolder(selectedFolder);
+
+        QDialog filesDialog(&dialog);
+        filesDialog.setWindowTitle(QObject::tr("Workspace .qxw"));
+        filesDialog.setModal(true);
+        QVBoxLayout *filesLayout = new QVBoxLayout(&filesDialog);
+        filesLayout->setContentsMargins(12, 12, 12, 12);
+        filesLayout->setSpacing(8);
+
+        QListWidget *filesList = new QListWidget(&filesDialog);
+        filesLayout->addWidget(filesList);
+
+        QPushButton *openSelectedButton = new QPushButton(QObject::tr("Apri selezionato"), &filesDialog);
+        filesLayout->addWidget(openSelectedButton, 0, Qt::AlignCenter);
+
+        const QStringList workspaceFiles = workspaceFilesFromFolder(selectedFolder);
+        for (const QString &workspaceFile : workspaceFiles)
+        {
+            QListWidgetItem *item = new QListWidgetItem(QFileInfo(workspaceFile).fileName(), filesList);
+            item->setData(Qt::UserRole, workspaceFile);
+        }
+
+        if (workspaceFiles.isEmpty())
+        {
+            QMessageBox::information(&filesDialog,
+                                     QObject::tr("Nessun file"),
+                                     QObject::tr("Nessun file .qxw trovato nella cartella selezionata."));
+            return;
+        }
+
+        auto openWorkspaceFromSelection = [&app, &dialog, &filesDialog, filesList]() {
+            QListWidgetItem *selectedItem = filesList->currentItem();
+            if (selectedItem == nullptr)
+                return;
+
+            const QString workspaceFile = selectedItem->data(Qt::UserRole).toString();
+            if (workspaceFile.isEmpty())
+                return;
+
+            if (app.loadXML(workspaceFile) == QFile::NoError)
+            {
+                app.updateFileOpenMenu(workspaceFile);
+                app.slotGoToVirtualConsole();
+                if (VirtualConsole::instance() != NULL && VirtualConsole::instance()->dockArea() != NULL)
+                    VirtualConsole::instance()->dockArea()->hide();
+
+                filesDialog.accept();
+                dialog.allowClose(true);
+                dialog.accept();
+                return;
+            }
+
+            QMessageBox::warning(&filesDialog,
+                                 QObject::tr("Errore"),
+                                 QObject::tr("Impossibile aprire il file selezionato."));
+        };
+
+        QObject::connect(openSelectedButton, &QPushButton::clicked, openWorkspaceFromSelection);
+        QObject::connect(filesList, &QListWidget::itemDoubleClicked, [&openWorkspaceFromSelection](QListWidgetItem *) {
+            openWorkspaceFromSelection();
+        });
+
+        filesDialog.resize(520, 360);
+        filesDialog.exec();
+    });
+
     dialog.adjustSize();
-    const QRect mainWindowGeometry = app.frameGeometry();
-    dialog.move(mainWindowGeometry.center() - dialog.rect().center());
+    QScreen *targetScreen = app.screen();
+    if (targetScreen == nullptr)
+        targetScreen = QGuiApplication::primaryScreen();
+
+    if (targetScreen != nullptr)
+    {
+        const QRect screenGeometry = targetScreen->availableGeometry();
+        dialog.move(screenGeometry.center() - dialog.rect().center());
+    }
+
     return dialog.exec() == QDialog::Accepted;
 }
 

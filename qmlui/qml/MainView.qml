@@ -34,8 +34,31 @@ Rectangle
     color: UISettings.bgMedium
 
     property string currentContext: ""
+    property string startupFolderPath: ""
+    property var startupWorkspaceFiles: []
 
-    Component.onCompleted: UISettings.sidePanelWidth = Math.min(width / 3, UISettings.bigItemHeight * 5)
+    function refreshStartupWorkspaceFiles()
+    {
+        if (startupFolderPath === "")
+        {
+            startupWorkspaceFiles = []
+            return
+        }
+
+        startupWorkspaceFiles = qlcplus.workspaceFilesInFolder(startupFolderPath)
+    }
+
+    function openWorkspaceFromStartupList(filePath)
+    {
+        startupWorkspacePopup.close()
+        qlcplus.loadWorkspace(filePath)
+    }
+
+    Component.onCompleted:
+    {
+        UISettings.sidePanelWidth = Math.min(width / 3, UISettings.bigItemHeight * 5)
+        startupFolderPromptTimer.start()
+    }
     onWidthChanged: UISettings.sidePanelWidth = Math.min(width / 3, UISettings.bigItemHeight * 5)
 
     function enableContext(ctx, setChecked)
@@ -585,6 +608,128 @@ Rectangle
         y: actEntry.height + 1
         visible: false
         z: visible ? 99 : 0
+    }
+
+    Timer
+    {
+        id: startupFolderPromptTimer
+        interval: 0
+        repeat: false
+        running: false
+        onTriggered:
+        {
+            if (qlcplus.fileName() !== "")
+                return
+
+            startupFolderPath = qlcplus.storedWorkspaceFolder()
+            if (startupFolderPath === "" && qlcplus.workingPath !== "")
+                startupFolderPath = qlcplus.workingPath
+
+            refreshStartupWorkspaceFiles()
+            startupWorkspacePopup.open()
+        }
+    }
+
+    CustomPopupDialog
+    {
+        id: startupWorkspacePopup
+        width: Math.min(mainView.width * 0.7, UISettings.bigItemHeight * 8)
+        height: Math.min(mainView.height * 0.7, UISettings.bigItemHeight * 9)
+        title: qsTr("Workspace folder")
+        standardButtons: Dialog.Close
+
+        contentItem:
+            ColumnLayout
+            {
+                spacing: 8
+
+                RobotoText
+                {
+                    Layout.fillWidth: true
+                    label: startupFolderPath === "" ? qsTr("No folder selected.") : startupFolderPath
+                    wrapText: true
+                    height: UISettings.iconSizeDefault
+                }
+
+                Button
+                {
+                    text: qsTr("Select folder")
+                    onClicked:
+                    {
+                        startupFolderBrowser.currentFolder = startupFolderPath !== "" ? startupFolderPath : qlcplus.workingPath
+                        startupFolderBrowser.open()
+                    }
+                }
+
+                Rectangle
+                {
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    color: UISettings.bgControl
+                    border.width: 1
+                    border.color: UISettings.bgLight
+
+                    ListView
+                    {
+                        id: startupFilesList
+                        anchors.fill: parent
+                        clip: true
+                        boundsBehavior: Flickable.StopAtBounds
+                        model: startupWorkspaceFiles
+
+                        delegate:
+                            Rectangle
+                            {
+                                width: startupFilesList.width
+                                height: UISettings.listItemHeight
+                                color: delegateArea.containsMouse ? UISettings.highlight : "transparent"
+
+                                RobotoText
+                                {
+                                    anchors.fill: parent
+                                    leftMargin: 8
+                                    rightMargin: 8
+                                    textVAlign: Text.AlignVCenter
+                                    label: modelData.split("/").pop()
+                                }
+
+                                MouseArea
+                                {
+                                    id: delegateArea
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    onClicked: openWorkspaceFromStartupList(modelData)
+                                }
+                            }
+                    }
+                }
+
+                RobotoText
+                {
+                    Layout.fillWidth: true
+                    visible: startupWorkspaceFiles.length === 0
+                    label: qsTr("No .qxw files found in this folder.")
+                }
+            }
+    }
+
+    PopupFolderBrowser
+    {
+        id: startupFolderBrowser
+        title: qsTr("Select folder")
+        currentFolder: startupFolderPath !== "" ? startupFolderPath : qlcplus.workingPath
+        nameFilters: [ qsTr("All files") + " (*)" ]
+        standardButtons: Dialog.Cancel | Dialog.Open
+
+        onAccepted:
+        {
+            var newFolder = currentFolder.toString()
+            if (qlcplus.setStoredWorkspaceFolder(newFolder))
+            {
+                startupFolderPath = qlcplus.storedWorkspaceFolder()
+                refreshStartupWorkspaceFiles()
+            }
+        }
     }
 
     /* Rectangle covering the whole window to
