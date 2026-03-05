@@ -33,6 +33,7 @@
 #include <QDialog>
 #include <QPushButton>
 #include <QVBoxLayout>
+#include <QHBoxLayout>
 #include <QCloseEvent>
 #include <QFileDialog>
 #include <QListWidget>
@@ -461,7 +462,7 @@ static bool showStartupOpenWorkspaceDialog(App &app, bool forceDialog = false)
     layout->setContentsMargins(20, 18, 20, 18);
     layout->setSpacing(12);
 
-    QPushButton *directoryFilesButton = new QPushButton(QObject::tr("Directori Files"), &dialog);
+    QPushButton *directoryFilesButton = new QPushButton(QIcon(":/folder.png"), QObject::tr("Diractory Files"), &dialog);
     layout->addWidget(directoryFilesButton, 0, Qt::AlignCenter);
 
     QLabel *folderLabel = new QLabel(&dialog);
@@ -472,14 +473,19 @@ static bool showStartupOpenWorkspaceDialog(App &app, bool forceDialog = false)
     filesList->setMinimumSize(520, 280);
     layout->addWidget(filesList);
 
-    QPushButton *openSelectedButton = new QPushButton(QObject::tr("Apri selezionato"), &dialog);
+    QPushButton *openSelectedButton = new QPushButton(QIcon(":/fileopen.png"), QObject::tr("Apri Selezionato"), &dialog);
     openSelectedButton->setDefault(true);
     openSelectedButton->setAutoDefault(true);
-    layout->addWidget(openSelectedButton, 0, Qt::AlignCenter);
-
-    QCheckBox *alwaysOpenSelectedCheck = new QCheckBox(QObject::tr("Apri sempre file selezionato"), &dialog);
+    QCheckBox *alwaysOpenSelectedCheck = new QCheckBox(QObject::tr("Apri all'avvio"), &dialog);
     alwaysOpenSelectedCheck->setChecked(storedStartupWorkspace.isEmpty() == false);
-    layout->addWidget(alwaysOpenSelectedCheck, 0, Qt::AlignCenter);
+    QHBoxLayout *openRowLayout = new QHBoxLayout();
+    openRowLayout->setSpacing(10);
+    openRowLayout->setContentsMargins(0, 0, 0, 0);
+    openRowLayout->addStretch();
+    openRowLayout->addWidget(openSelectedButton);
+    openRowLayout->addWidget(alwaysOpenSelectedCheck);
+    openRowLayout->addStretch();
+    layout->addLayout(openRowLayout);
 
     QPushButton *exitButton = new QPushButton(QObject::tr("Esci"), &dialog);
     exitButton->setStyleSheet(QStringLiteral("QPushButton { background-color: #c62828; color: white; font-weight: 600; }"));
