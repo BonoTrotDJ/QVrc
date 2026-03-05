@@ -42,10 +42,12 @@
 #include <QFileInfo>
 #include <QFile>
 #include <QLabel>
+#include <QCheckBox>
 
 #include "qlcconfig.h"
 #include "qlci18n.h"
 #include "qlcfile.h"
+#include "qlcfixturedefcache.h"
 #include "qvrcinfo.h"
 #include "vcdockarea.h"
 
@@ -349,51 +351,83 @@ private:
 
 static bool showStartupOpenWorkspaceDialog(App &app)
 {
-    auto startupFolderStoreFilePath = []() -> QString
+    struct StartupSettings
     {
-        QString configPath = QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation);
-        if (configPath.isEmpty())
-            configPath = QDir::homePath() + QDir::separator() + ".qlcplus";
-
-        QDir configDir(configPath);
-        if (configDir.exists() == false)
-            configDir.mkpath(".");
-
-        return configDir.filePath("startup_workspace_folder.txt");
+        QString folderPath;
+        QString workspacePath;
     };
 
-    auto readStoredWorkspaceFolder = [&startupFolderStoreFilePath]() -> QString
+    auto settingsFilePath = []() -> QString
     {
-        QFile file(startupFolderStoreFilePath());
+        QDir appDir(QApplication::applicationDirPath());
+        return appDir.filePath("setting.opz");
+    };
+
+    auto readStartupSettings = [&settingsFilePath]() -> StartupSettings
+    {
+        StartupSettings settings;
+        QFile file(settingsFilePath());
         if (file.open(QIODevice::ReadOnly | QIODevice::Text) == false)
-            return QString();
+            return settings;
 
         QTextStream stream(&file);
-        const QString path = stream.readLine().trimmed();
-        if (path.isEmpty() == true)
-            return QString();
+        while (stream.atEnd() == false)
+        {
+            const QString line = stream.readLine().trimmed();
+            if (line.startsWith("folder=", Qt::CaseInsensitive))
+                settings.folderPath = line.mid(QString("folder=").length()).trimmed();
+            else if (line.startsWith("file=", Qt::CaseInsensitive))
+                settings.workspacePath = line.mid(QString("file=").length()).trimmed();
+        }
 
-        QDir dir(path);
-        if (dir.exists() == false)
-            return QString();
-
-        return dir.absolutePath();
+        return settings;
     };
 
-    auto saveStoredWorkspaceFolder = [&startupFolderStoreFilePath](const QString &folderPath) -> bool
+    auto saveStartupSettings = [&settingsFilePath](const StartupSettings &settings) -> bool
     {
-        QDir folder(folderPath);
-        if (folder.exists() == false)
-            return false;
-
-        QFile file(startupFolderStoreFilePath());
+        QFile file(settingsFilePath());
         if (file.open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::Truncate) == false)
             return false;
 
         QTextStream stream(&file);
-        stream << folder.absolutePath() << '\n';
+        stream << "folder=" << settings.folderPath << '\n';
+        stream << "file=" << settings.workspacePath << '\n';
         return true;
     };
+
+    auto openWorkspaceAndCloseStartup = [&app](const QString &workspaceFile) -> bool
+    {
+        if (workspaceFile.isEmpty())
+            return false;
+
+        if (QFile::exists(workspaceFile) == false)
+            return false;
+
+        if (app.loadXML(workspaceFile) != QFile::NoError)
+            return false;
+
+        app.updateFileOpenMenu(workspaceFile);
+        app.slotGoToVirtualConsole();
+        if (VirtualConsole::instance() != NULL && VirtualConsole::instance()->dockArea() != NULL)
+            VirtualConsole::instance()->dockArea()->hide();
+        return true;
+    };
+
+    // If a startup workspace was chosen previously, try to open it immediately.
+    StartupSettings startupSettings = readStartupSettings();
+    const QString storedStartupWorkspace = startupSettings.workspacePath;
+    if (storedStartupWorkspace.isEmpty() == false)
+    {
+        if (openWorkspaceAndCloseStartup(storedStartupWorkspace))
+            return true;
+
+        startupSettings.workspacePath.clear();
+        saveStartupSettings(startupSettings);
+
+        QMessageBox::warning(&app,
+                             QObject::tr("Errore"),
+                             QObject::tr("Il file di avvio selezionato non esiste più o non è apribile.\nSeleziona una nuova cartella/file."));
+    }
 
     auto workspaceFilesFromFolder = [](const QString &folderPath) -> QStringList
     {
@@ -438,6 +472,10 @@ static bool showStartupOpenWorkspaceDialog(App &app)
     openSelectedButton->setAutoDefault(true);
     layout->addWidget(openSelectedButton, 0, Qt::AlignCenter);
 
+    QCheckBox *alwaysOpenSelectedCheck = new QCheckBox(QObject::tr("Apri sempre file selezionato"), &dialog);
+    alwaysOpenSelectedCheck->setChecked(storedStartupWorkspace.isEmpty() == false);
+    layout->addWidget(alwaysOpenSelectedCheck, 0, Qt::AlignCenter);
+
     QPushButton *exitButton = new QPushButton(QObject::tr("Esci"), &dialog);
     exitButton->setStyleSheet(QStringLiteral("QPushButton { background-color: #c62828; color: white; font-weight: 600; }"));
     layout->addWidget(exitButton, 0, Qt::AlignCenter);
@@ -448,7 +486,7 @@ static bool showStartupOpenWorkspaceDialog(App &app)
         dialog.close();
     });
 
-    QString selectedFolder = readStoredWorkspaceFolder();
+    QString selectedFolder = startupSettings.folderPath;
     auto refreshWorkspaceList = [&selectedFolder, &workspaceFilesFromFolder, folderLabel, filesList]() {
         filesList->clear();
 
@@ -468,7 +506,8 @@ static bool showStartupOpenWorkspaceDialog(App &app)
         }
     };
 
-    auto openWorkspaceFromSelection = [&app, &dialog, filesList]() {
+    auto openWorkspaceFromSelection = [&app, &dialog, filesList, alwaysOpenSelectedCheck,
+                                       &selectedFolder, &startupSettings, &saveStartupSettings]() {
         QListWidgetItem *selectedItem = filesList->currentItem();
         if (selectedItem == nullptr)
         {
@@ -484,6 +523,13 @@ static bool showStartupOpenWorkspaceDialog(App &app)
 
         if (app.loadXML(workspaceFile) == QFile::NoError)
         {
+            startupSettings.folderPath = selectedFolder;
+            if (alwaysOpenSelectedCheck->isChecked())
+                startupSettings.workspacePath = workspaceFile;
+            else
+                startupSettings.workspacePath.clear();
+
+            saveStartupSettings(startupSettings);
             app.updateFileOpenMenu(workspaceFile);
             app.slotGoToVirtualConsole();
             if (VirtualConsole::instance() != NULL && VirtualConsole::instance()->dockArea() != NULL)
@@ -500,7 +546,8 @@ static bool showStartupOpenWorkspaceDialog(App &app)
 
     QObject::connect(directoryFilesButton, &QPushButton::clicked, [&dialog,
                                                                     &selectedFolder,
-                                                                    &saveStoredWorkspaceFolder,
+                                                                    &startupSettings,
+                                                                    &saveStartupSettings,
                                                                     &refreshWorkspaceList]() {
         QString initialFolder = selectedFolder;
         if (initialFolder.isEmpty())
@@ -516,7 +563,10 @@ static bool showStartupOpenWorkspaceDialog(App &app)
             return;
 
         selectedFolder = newFolder;
-        saveStoredWorkspaceFolder(selectedFolder);
+        startupSettings.folderPath = selectedFolder;
+        // force a new explicit selection from the refreshed list
+        startupSettings.workspacePath.clear();
+        saveStartupSettings(startupSettings);
         refreshWorkspaceList();
     });
 
@@ -540,6 +590,29 @@ static bool showStartupOpenWorkspaceDialog(App &app)
     }
 
     return dialog.exec() == QDialog::Accepted;
+}
+
+static void ensureKnownFixtureDefinitionAvailable()
+{
+    const QString manufacturer = QStringLiteral("Varytec");
+    const QString fixtureFilename = QStringLiteral("Varytec-Colors-NerveStrobe-HP.qxf");
+
+    QDir userFixturesDir = QLCFixtureDefCache::userDefinitionDirectory();
+    const QString userManufacturerDirPath = userFixturesDir.absoluteFilePath(manufacturer);
+    QDir userManufacturerDir(userManufacturerDirPath);
+    if (userManufacturerDir.exists() == false)
+        userFixturesDir.mkpath(manufacturer);
+
+    const QString userFixturePath = userManufacturerDirPath + QDir::separator() + fixtureFilename;
+    if (QFile::exists(userFixturePath))
+        return;
+
+    QDir systemFixturesDir = QLCFixtureDefCache::systemDefinitionDirectory();
+    const QString systemFixturePath = systemFixturesDir.absoluteFilePath(manufacturer + QDir::separator() + fixtureFilename);
+    if (QFile::exists(systemFixturePath) == false)
+        return;
+
+    QFile::copy(systemFixturePath, userFixturePath);
 }
 
 /**
@@ -583,6 +656,8 @@ int main(int argc, char** argv)
 
     /* Create and initialize the QLC application object */
     App app;
+
+    ensureKnownFixtureDefinitionAvailable();
 
     if (QLCArgs::enableOverscan == true)
         app.enableOverscan();
