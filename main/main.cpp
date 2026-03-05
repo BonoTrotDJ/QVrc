@@ -437,6 +437,7 @@ int main(int argc, char** argv)
 
     app.startup();
     app.show();
+    app.showMaximized();
 
     if (QLCArgs::workspace.isEmpty() == false)
     {
@@ -457,7 +458,7 @@ int main(int argc, char** argv)
         app.slotModeOperate();
     if (QLCArgs::kioskMode == true)
         app.enableKioskMode();
-    if (QLCArgs::fullScreen == true)
+    if (QLCArgs::fullScreen == true && (app.windowState() & Qt::WindowFullScreen) == 0)
         app.slotControlFullScreen(QLCArgs::fullScreenResize);
     if (QLCArgs::kioskMode == true && QLCArgs::closeButtonRect.isValid() == true)
         app.createKioskCloseButton(QLCArgs::closeButtonRect);
