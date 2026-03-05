@@ -603,14 +603,23 @@ static bool showStartupOpenWorkspaceDialog(App &app, bool forceDialog = false)
 static void installStartupSettingsMenu(App &app)
 {
     QMenuBar *menuBar = app.menuBar();
-    QMenu *settingsMenu = menuBar->addMenu(QObject::tr("Settaggio"));
-    QAction *settingsAction = new QAction(QStringLiteral("[F1] Settaggio"), &app);
+    menuBar->setStyleSheet(QStringLiteral(
+        "QMenuBar::item { font-size: 16px; font-weight: 700; padding: 6px 12px; }"));
+
+    QMenu *settingsMenu = menuBar->addMenu(QObject::tr("Menu"));
+
+    QAction *settingsAction = new QAction(QIcon(":/configure.png"), QStringLiteral("[F1] Settaggio"), &app);
     settingsAction->setShortcut(QKeySequence(Qt::Key_F1));
     settingsAction->setShortcutContext(Qt::ApplicationShortcut);
     QObject::connect(settingsAction, &QAction::triggered, [&app]() {
         showStartupOpenWorkspaceDialog(app, true);
     });
     settingsMenu->addAction(settingsAction);
+
+    settingsMenu->addSeparator();
+    QAction *exitAction = new QAction(QIcon(":/exit.png"), QObject::tr("Esci"), &app);
+    QObject::connect(exitAction, &QAction::triggered, &app, &QWidget::close);
+    settingsMenu->addAction(exitAction);
 }
 
 static void ensureKnownFixtureDefinitionAvailable()
