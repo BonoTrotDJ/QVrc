@@ -32,8 +32,6 @@
 #include <QDir>
 #include <QDialog>
 #include <QPushButton>
-#include <QVBoxLayout>
-#include <QHBoxLayout>
 #include <QCloseEvent>
 #include <QFileDialog>
 #include <QListWidget>
@@ -49,6 +47,7 @@
 #include <QMenu>
 #include <QAction>
 
+#include "ui_scelta_directory.h"
 #include "qlcconfig.h"
 #include "qlci18n.h"
 #include "qlcfile.h"
@@ -457,39 +456,20 @@ static bool showStartupOpenWorkspaceDialog(App &app, bool forceDialog = false)
     dialog.setWindowTitle(QObject::tr("Documento Avvio"));
     dialog.setModal(true);
     dialog.setWindowFlags(Qt::Dialog | Qt::CustomizeWindowHint | Qt::WindowTitleHint);
+    Ui::SceltaDirectory startupUi;
+    startupUi.setupUi(&dialog);
 
-    QVBoxLayout *layout = new QVBoxLayout(&dialog);
-    layout->setContentsMargins(20, 18, 20, 18);
-    layout->setSpacing(12);
+    QPushButton *directoryFilesButton = startupUi.directoryFilesButton;
+    QLabel *folderLabel = startupUi.folderLabel;
+    QListWidget *filesList = startupUi.filesList;
+    QPushButton *openSelectedButton = startupUi.openSelectedButton;
+    QCheckBox *alwaysOpenSelectedCheck = startupUi.alwaysOpenSelectedCheck;
+    QPushButton *exitButton = startupUi.exitButton;
 
-    QPushButton *directoryFilesButton = new QPushButton(QIcon(":/folder.png"), QObject::tr("Diractory Files"), &dialog);
-    layout->addWidget(directoryFilesButton, 0, Qt::AlignCenter);
-
-    QLabel *folderLabel = new QLabel(&dialog);
-    folderLabel->setWordWrap(true);
-    layout->addWidget(folderLabel);
-
-    QListWidget *filesList = new QListWidget(&dialog);
-    filesList->setMinimumSize(520, 280);
-    layout->addWidget(filesList);
-
-    QPushButton *openSelectedButton = new QPushButton(QIcon(":/fileopen.png"), QObject::tr("Apri Selezionato"), &dialog);
+    alwaysOpenSelectedCheck->setChecked(storedStartupWorkspace.isEmpty() == false);
     openSelectedButton->setDefault(true);
     openSelectedButton->setAutoDefault(true);
-    QCheckBox *alwaysOpenSelectedCheck = new QCheckBox(QObject::tr("Apri all'avvio"), &dialog);
-    alwaysOpenSelectedCheck->setChecked(storedStartupWorkspace.isEmpty() == false);
-    QHBoxLayout *openRowLayout = new QHBoxLayout();
-    openRowLayout->setSpacing(10);
-    openRowLayout->setContentsMargins(0, 0, 0, 0);
-    openRowLayout->addStretch();
-    openRowLayout->addWidget(openSelectedButton);
-    openRowLayout->addWidget(alwaysOpenSelectedCheck);
-    openRowLayout->addStretch();
-    layout->addLayout(openRowLayout);
-
-    QPushButton *exitButton = new QPushButton(QObject::tr("Esci"), &dialog);
     exitButton->setStyleSheet(QStringLiteral("QPushButton { background-color: #c62828; color: white; font-weight: 600; }"));
-    layout->addWidget(exitButton, 0, Qt::AlignCenter);
 
     QObject::connect(exitButton, &QPushButton::clicked, [&dialog]() {
         dialog.allowClose(true);

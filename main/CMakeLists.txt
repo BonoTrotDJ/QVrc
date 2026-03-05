@@ -2,6 +2,11 @@ set(module_name "qlcplus")
 
 add_executable(${module_name} WIN32
     main.cpp
+    ../ui/src/scelta_directory.ui
+)
+
+set_target_properties(${module_name} PROPERTIES
+    AUTOUIC_SEARCH_PATHS "${CMAKE_SOURCE_DIR}/ui/src"
 )
 
 target_include_directories(${module_name} PRIVATE
