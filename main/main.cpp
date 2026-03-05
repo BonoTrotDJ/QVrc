@@ -43,6 +43,7 @@
 #include <QFile>
 #include <QLabel>
 #include <QCheckBox>
+#include <QShortcut>
 
 #include "qlcconfig.h"
 #include "qlci18n.h"
@@ -50,6 +51,7 @@
 #include "qlcfixturedefcache.h"
 #include "qvrcinfo.h"
 #include "vcdockarea.h"
+#include "vcframe.h"
 
 #if defined(WIN32) || defined(__APPLE__)
   #include "debugbox.h"
@@ -349,7 +351,7 @@ private:
     bool m_allowClose;
 };
 
-static bool showStartupOpenWorkspaceDialog(App &app)
+static bool showStartupOpenWorkspaceDialog(App &app, bool forceDialog = false)
 {
     struct StartupSettings
     {
@@ -403,6 +405,7 @@ static bool showStartupOpenWorkspaceDialog(App &app)
         if (QFile::exists(workspaceFile) == false)
             return false;
 
+        app.clearDocument();
         if (app.loadXML(workspaceFile) != QFile::NoError)
             return false;
 
@@ -414,9 +417,10 @@ static bool showStartupOpenWorkspaceDialog(App &app)
     };
 
     // If a startup workspace was chosen previously, try to open it immediately.
+    // This is skipped when the dialog is explicitly requested (e.g. F1).
     StartupSettings startupSettings = readStartupSettings();
     const QString storedStartupWorkspace = startupSettings.workspacePath;
-    if (storedStartupWorkspace.isEmpty() == false)
+    if (forceDialog == false && storedStartupWorkspace.isEmpty() == false)
     {
         if (openWorkspaceAndCloseStartup(storedStartupWorkspace))
             return true;
@@ -521,6 +525,7 @@ static bool showStartupOpenWorkspaceDialog(App &app)
         if (workspaceFile.isEmpty())
             return;
 
+        app.clearDocument();
         if (app.loadXML(workspaceFile) == QFile::NoError)
         {
             startupSettings.folderPath = selectedFolder;
@@ -590,6 +595,44 @@ static bool showStartupOpenWorkspaceDialog(App &app)
     }
 
     return dialog.exec() == QDialog::Accepted;
+}
+
+static void ensureStartupSettingsControls(App &app)
+{
+    QWidget *vcContents = nullptr;
+    if (VirtualConsole::instance() != nullptr)
+        vcContents = VirtualConsole::instance()->contents();
+
+    if (vcContents == nullptr)
+        return;
+
+    QPushButton *settingsButton = vcContents->findChild<QPushButton *>("startupSettingsButton");
+    if (settingsButton == nullptr)
+    {
+        settingsButton = new QPushButton(QStringLiteral("[F1] Settaggio"), vcContents);
+        settingsButton->setObjectName(QStringLiteral("startupSettingsButton"));
+        settingsButton->setGeometry(8, 8, 150, 34);
+        settingsButton->setStyleSheet(QStringLiteral("QPushButton { background-color: #1e88e5; color: white; font-weight: 600; }"));
+        QObject::connect(settingsButton, &QPushButton::clicked, [&app]() {
+            showStartupOpenWorkspaceDialog(app, true);
+        });
+    }
+    else
+    {
+        settingsButton->setText(QStringLiteral("[F1] Settaggio"));
+    }
+
+    settingsButton->show();
+    settingsButton->raise();
+}
+
+static void installStartupSettingsShortcut(App &app)
+{
+    QShortcut *settingsShortcut = new QShortcut(QKeySequence(Qt::Key_F1), &app);
+    settingsShortcut->setContext(Qt::ApplicationShortcut);
+    QObject::connect(settingsShortcut, &QShortcut::activated, [&app]() {
+        showStartupOpenWorkspaceDialog(app, true);
+    });
 }
 
 static void ensureKnownFixtureDefinitionAvailable()
@@ -680,11 +723,13 @@ int main(int argc, char** argv)
     app.startup();
     app.show();
     app.showMaximized();
+    installStartupSettingsShortcut(app);
 
     if (QLCArgs::workspace.isEmpty() == false)
     {
         if (app.loadXML(QLCArgs::workspace) == QFile::NoError)
             app.updateFileOpenMenu(QLCArgs::workspace);
+        ensureStartupSettingsControls(app);
     }
     else
     {
@@ -695,6 +740,8 @@ int main(int argc, char** argv)
 
         if (showStartupOpenWorkspaceDialog(app) == false)
             return 0;
+
+        ensureStartupSettingsControls(app);
     }
     if (QLCArgs::operate == true)
         app.slotModeOperate();
