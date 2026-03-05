@@ -41,6 +41,7 @@
 #include <QScreen>
 #include <QFileInfo>
 #include <QFile>
+#include <QLabel>
 
 #include "qlcconfig.h"
 #include "qlci18n.h"
@@ -421,31 +422,25 @@ static bool showStartupOpenWorkspaceDialog(App &app)
     layout->setContentsMargins(20, 18, 20, 18);
     layout->setSpacing(12);
 
-    QPushButton *openButton = new QPushButton(QObject::tr("Apri Docuemnto"), &dialog);
-    openButton->setDefault(true);
-    openButton->setAutoDefault(true);
-    openButton->setVisible(false);
-    layout->addWidget(openButton, 0, Qt::AlignCenter);
-
     QPushButton *directoryFilesButton = new QPushButton(QObject::tr("Directori Files"), &dialog);
     layout->addWidget(directoryFilesButton, 0, Qt::AlignCenter);
+
+    QLabel *folderLabel = new QLabel(&dialog);
+    folderLabel->setWordWrap(true);
+    layout->addWidget(folderLabel);
+
+    QListWidget *filesList = new QListWidget(&dialog);
+    filesList->setMinimumSize(520, 280);
+    layout->addWidget(filesList);
+
+    QPushButton *openSelectedButton = new QPushButton(QObject::tr("Apri selezionato"), &dialog);
+    openSelectedButton->setDefault(true);
+    openSelectedButton->setAutoDefault(true);
+    layout->addWidget(openSelectedButton, 0, Qt::AlignCenter);
 
     QPushButton *exitButton = new QPushButton(QObject::tr("Esci"), &dialog);
     exitButton->setStyleSheet(QStringLiteral("QPushButton { background-color: #c62828; color: white; font-weight: 600; }"));
     layout->addWidget(exitButton, 0, Qt::AlignCenter);
-
-    QObject::connect(openButton, &QPushButton::clicked, [&app, &dialog]() {
-        const QString previousFile = app.fileName();
-        const QFile::FileError error = app.slotFileOpen();
-        if (error == QFile::NoError && app.fileName().isEmpty() == false && app.fileName() != previousFile)
-        {
-            app.slotGoToVirtualConsole();
-            if (VirtualConsole::instance() != NULL && VirtualConsole::instance()->dockArea() != NULL)
-                VirtualConsole::instance()->dockArea()->hide();
-            dialog.allowClose(true);
-            dialog.accept();
-        }
-    });
 
     QObject::connect(exitButton, &QPushButton::clicked, [&dialog]() {
         dialog.allowClose(true);
@@ -453,37 +448,17 @@ static bool showStartupOpenWorkspaceDialog(App &app)
         dialog.close();
     });
 
-    QObject::connect(directoryFilesButton, &QPushButton::clicked, [&app, &dialog,
-                                                                    &readStoredWorkspaceFolder,
-                                                                    &saveStoredWorkspaceFolder,
-                                                                    &workspaceFilesFromFolder]() {
-        QString initialFolder = readStoredWorkspaceFolder();
-        if (initialFolder.isEmpty())
-            initialFolder = QDir::homePath();
-
-        const QString selectedFolder = QFileDialog::getExistingDirectory(
-            &dialog,
-            QObject::tr("Seleziona cartella workspace"),
-            initialFolder,
-            QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
+    QString selectedFolder = readStoredWorkspaceFolder();
+    auto refreshWorkspaceList = [&selectedFolder, &workspaceFilesFromFolder, folderLabel, filesList]() {
+        filesList->clear();
 
         if (selectedFolder.isEmpty())
+        {
+            folderLabel->setText(QObject::tr("Nessuna cartella selezionata."));
             return;
+        }
 
-        saveStoredWorkspaceFolder(selectedFolder);
-
-        QDialog filesDialog(&dialog);
-        filesDialog.setWindowTitle(QObject::tr("Workspace .qxw"));
-        filesDialog.setModal(true);
-        QVBoxLayout *filesLayout = new QVBoxLayout(&filesDialog);
-        filesLayout->setContentsMargins(12, 12, 12, 12);
-        filesLayout->setSpacing(8);
-
-        QListWidget *filesList = new QListWidget(&filesDialog);
-        filesLayout->addWidget(filesList);
-
-        QPushButton *openSelectedButton = new QPushButton(QObject::tr("Apri selezionato"), &filesDialog);
-        filesLayout->addWidget(openSelectedButton, 0, Qt::AlignCenter);
+        folderLabel->setText(selectedFolder);
 
         const QStringList workspaceFiles = workspaceFilesFromFolder(selectedFolder);
         for (const QString &workspaceFile : workspaceFiles)
@@ -491,50 +466,67 @@ static bool showStartupOpenWorkspaceDialog(App &app)
             QListWidgetItem *item = new QListWidgetItem(QFileInfo(workspaceFile).fileName(), filesList);
             item->setData(Qt::UserRole, workspaceFile);
         }
+    };
 
-        if (workspaceFiles.isEmpty())
+    auto openWorkspaceFromSelection = [&app, &dialog, filesList]() {
+        QListWidgetItem *selectedItem = filesList->currentItem();
+        if (selectedItem == nullptr)
         {
-            QMessageBox::information(&filesDialog,
+            QMessageBox::information(&dialog,
                                      QObject::tr("Nessun file"),
-                                     QObject::tr("Nessun file .qxw trovato nella cartella selezionata."));
+                                     QObject::tr("Seleziona un file .qxw dall'elenco."));
             return;
         }
 
-        auto openWorkspaceFromSelection = [&app, &dialog, &filesDialog, filesList]() {
-            QListWidgetItem *selectedItem = filesList->currentItem();
-            if (selectedItem == nullptr)
-                return;
+        const QString workspaceFile = selectedItem->data(Qt::UserRole).toString();
+        if (workspaceFile.isEmpty())
+            return;
 
-            const QString workspaceFile = selectedItem->data(Qt::UserRole).toString();
-            if (workspaceFile.isEmpty())
-                return;
+        if (app.loadXML(workspaceFile) == QFile::NoError)
+        {
+            app.updateFileOpenMenu(workspaceFile);
+            app.slotGoToVirtualConsole();
+            if (VirtualConsole::instance() != NULL && VirtualConsole::instance()->dockArea() != NULL)
+                VirtualConsole::instance()->dockArea()->hide();
+            dialog.allowClose(true);
+            dialog.accept();
+            return;
+        }
 
-            if (app.loadXML(workspaceFile) == QFile::NoError)
-            {
-                app.updateFileOpenMenu(workspaceFile);
-                app.slotGoToVirtualConsole();
-                if (VirtualConsole::instance() != NULL && VirtualConsole::instance()->dockArea() != NULL)
-                    VirtualConsole::instance()->dockArea()->hide();
+        QMessageBox::warning(&dialog,
+                             QObject::tr("Errore"),
+                             QObject::tr("Impossibile aprire il file selezionato."));
+    };
 
-                filesDialog.accept();
-                dialog.allowClose(true);
-                dialog.accept();
-                return;
-            }
+    QObject::connect(directoryFilesButton, &QPushButton::clicked, [&dialog,
+                                                                    &selectedFolder,
+                                                                    &saveStoredWorkspaceFolder,
+                                                                    &refreshWorkspaceList]() {
+        QString initialFolder = selectedFolder;
+        if (initialFolder.isEmpty())
+            initialFolder = QDir::homePath();
 
-            QMessageBox::warning(&filesDialog,
-                                 QObject::tr("Errore"),
-                                 QObject::tr("Impossibile aprire il file selezionato."));
-        };
+        const QString newFolder = QFileDialog::getExistingDirectory(
+            &dialog,
+            QObject::tr("Seleziona cartella workspace"),
+            initialFolder,
+            QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
 
-        QObject::connect(openSelectedButton, &QPushButton::clicked, openWorkspaceFromSelection);
-        QObject::connect(filesList, &QListWidget::itemDoubleClicked, [&openWorkspaceFromSelection](QListWidgetItem *) {
-            openWorkspaceFromSelection();
-        });
+        if (newFolder.isEmpty())
+            return;
 
-        filesDialog.resize(520, 360);
-        filesDialog.exec();
+        selectedFolder = newFolder;
+        saveStoredWorkspaceFolder(selectedFolder);
+        refreshWorkspaceList();
     });
+
+    QObject::connect(openSelectedButton, &QPushButton::clicked, openWorkspaceFromSelection);
+    QObject::connect(filesList, &QListWidget::itemDoubleClicked, [&openWorkspaceFromSelection](QListWidgetItem *) {
+        openWorkspaceFromSelection();
+    });
+
+    // If a folder is already stored, immediately show its .qxw list.
+    refreshWorkspaceList();
 
     dialog.adjustSize();
     QScreen *targetScreen = app.screen();
