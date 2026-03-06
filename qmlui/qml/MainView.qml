@@ -600,6 +600,14 @@ Rectangle
 
     PopupNetworkConnect { id: clientAccessPopup }
 
+    PopupEncrypt { id: encryptPopup }
+
+    Shortcut
+    {
+        sequence: "Ctrl+F12"
+        onActivated: encryptPopup.open()
+    }
+
     /** Menu to open/load/save a project */
     ActionsMenu
     {

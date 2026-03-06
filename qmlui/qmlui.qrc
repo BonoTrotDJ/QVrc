@@ -83,6 +83,7 @@
     <file alias="PopupManualInputSource.qml">qml/popup/PopupManualInputSource.qml</file>
     <file alias="PopupInputChannelEditor.qml">qml/popup/PopupInputChannelEditor.qml</file>
     <file alias="PopupInputNumber.qml">qml/popup/PopupInputNumber.qml</file>
+    <file alias="PopupEncrypt.qml">qml/popup/PopupEncrypt.qml</file>
 
     <!-- Fixtures and Functions -->
     <file alias="FixturesAndFunctions.qml">qml/fixturesfunctions/FixturesAndFunctions.qml</file>

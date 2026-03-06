@@ -43,6 +43,8 @@
 #include "aboutbox.h"
 #include "monitor.h"
 #include "vcframe.h"
+#include "decryptworkspacedialog.h"
+#include "encryptworkspacedialog.h"
 #include "app.h"
 #include "doc.h"
 
@@ -750,6 +752,13 @@ void App::initActions()
     m_addressToolAction = new QAction(QIcon(":/diptool.png"), tr("Address Tool"), this);
     connect(m_addressToolAction, SIGNAL(triggered()), this, SLOT(slotAddressTool()));
 
+    m_encryptAction = new QAction(QIcon(":/filesave.png"), tr("Encrypt workspace..."), this);
+    m_encryptAction->setShortcut(QKeySequence("CTRL+E"));
+    connect(m_encryptAction, SIGNAL(triggered()), this, SLOT(slotEncryptWorkspace()));
+
+    m_decryptAction = new QAction(QIcon(":/fileopen.png"), tr("Decrypt workspace..."), this);
+    connect(m_decryptAction, SIGNAL(triggered()), this, SLOT(slotDecryptWorkspace()));
+
     m_controlBlackoutAction = new QAction(QIcon(":/blackout.png"), tr("Toggle &Blackout"), this);
     m_controlBlackoutAction->setCheckable(true);
     connect(m_controlBlackoutAction, SIGNAL(triggered(bool)), this, SLOT(slotControlBlackout()));
@@ -828,6 +837,8 @@ void App::initToolBar()
     m_toolbar->addAction(m_fileOpenAction);
     m_toolbar->addAction(m_fileSaveAction);
     m_toolbar->addAction(m_fileSaveAsAction);
+    m_toolbar->addAction(m_encryptAction);
+    m_toolbar->addAction(m_decryptAction);
     m_toolbar->addSeparator();
     m_toolbar->addAction(m_controlMonitorAction);
     m_toolbar->addAction(m_addressToolAction);
@@ -1328,6 +1339,18 @@ void App::slotHelpAbout()
 {
     AboutBox ab(this);
     ab.exec();
+}
+
+void App::slotEncryptWorkspace()
+{
+    EncryptWorkspaceDialog dialog(this);
+    dialog.exec();
+}
+
+void App::slotDecryptWorkspace()
+{
+    DecryptWorkspaceDialog dialog(this);
+    dialog.exec();
 }
 
 void App::slotRecentFileClicked(QAction *recent)

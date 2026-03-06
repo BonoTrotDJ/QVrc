@@ -43,6 +43,7 @@
 #include <unistd.h>
 
 #include "app.h"
+#include "tardis/simplecrypt.h"
 #include "uimanager.h"
 #include "simpledesk.h"
 #include "showmanager.h"
@@ -924,6 +925,34 @@ bool App::saveWorkspace(const QString &fileName)
     }
 
     return false;
+}
+
+QString App::encryptWorkspace(const QString &sourcePath, const QString &destPath)
+{
+    QString src = sourcePath.startsWith("file:") ? QUrl(sourcePath).toLocalFile() : sourcePath;
+    QString dst = destPath.startsWith("file:") ? QUrl(destPath).toLocalFile() : destPath;
+
+    QFile srcFile(src);
+    if (!srcFile.open(QIODevice::ReadOnly))
+        return tr("Cannot open source file: %1").arg(srcFile.errorString());
+
+    QByteArray plainData = srcFile.readAll();
+    srcFile.close();
+
+    SimpleCrypt crypto(Q_UINT64_C(0x4D756C74697665727365));
+    QByteArray encryptedData = crypto.encryptToByteArray(plainData);
+
+    if (crypto.lastError() != SimpleCrypt::ErrorNoError)
+        return tr("Encryption failed (error %1)").arg(crypto.lastError());
+
+    QFile dstFile(dst);
+    if (!dstFile.open(QIODevice::WriteOnly))
+        return tr("Cannot write destination file: %1").arg(dstFile.errorString());
+
+    dstFile.write(encryptedData);
+    dstFile.close();
+
+    return QString();
 }
 
 QFileDevice::FileError App::loadXML(const QString &fileName)

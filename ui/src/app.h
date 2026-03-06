@@ -182,6 +182,8 @@ public slots:
     void slotHelpAbout();
 
     void slotRecentFileClicked(QAction *recent);
+    void slotEncryptWorkspace();
+    void slotDecryptWorkspace();
 
 private:
     QAction* m_fileNewAction;
@@ -192,6 +194,8 @@ private:
     QAction* m_modeToggleAction;
     QAction* m_controlMonitorAction;
     QAction* m_addressToolAction;
+    QAction* m_encryptAction;
+    QAction* m_decryptAction;
     QAction* m_controlFullScreenAction;
     QAction* m_controlBlackoutAction;
     QAction* m_controlPanicAction;

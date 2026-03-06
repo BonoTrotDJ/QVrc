@@ -339,6 +339,9 @@ public:
     /** Save the current workspace with the given $fileName */
     Q_INVOKABLE bool saveWorkspace(const QString& fileName);
 
+    /** Encrypt a .qxw file and save it as .igm */
+    Q_INVOKABLE QString encryptWorkspace(const QString &sourcePath, const QString &destPath);
+
     /**
      * Load workspace contents from a XML file with the given name.
      *

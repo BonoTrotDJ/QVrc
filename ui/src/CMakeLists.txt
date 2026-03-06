@@ -50,6 +50,9 @@ add_library(${module_name}
     dmxdumpfactory.cpp dmxdumpfactory.h dmxdumpfactory.ui
     efxeditor.cpp efxeditor.h efxeditor.ui
     efxpreviewarea.cpp efxpreviewarea.h
+    decryptworkspacedialog.cpp decryptworkspacedialog.h decryptworkspacedialog.ui
+    encryptworkspacedialog.cpp encryptworkspacedialog.h encryptworkspacedialog.ui
+    ../../qmlui/tardis/simplecrypt.cpp ../../qmlui/tardis/simplecrypt.h
     fixtureconsole.cpp fixtureconsole.h
     fixturegroupeditor.cpp fixturegroupeditor.h fixturegroupeditor.ui
     fixturemanager.cpp fixturemanager.h

@@ -46,6 +46,8 @@
 #include <QMenuBar>
 #include <QMenu>
 #include <QAction>
+#include <QBuffer>
+#include <QXmlStreamReader>
 
 #include "ui_scelta_directory.h"
 #include "qlcconfig.h"
@@ -55,6 +57,8 @@
 #include "qvrcinfo.h"
 #include "vcdockarea.h"
 #include "vcframe.h"
+#include "encryptworkspacedialog.h"
+#include "../qmlui/tardis/simplecrypt.h"
 
 #if defined(WIN32) || defined(__APPLE__)
   #include "debugbox.h"
@@ -400,7 +404,49 @@ static bool showStartupOpenWorkspaceDialog(App &app, bool forceDialog = false)
         return true;
     };
 
-    auto openWorkspaceAndCloseStartup = [&app](const QString &workspaceFile) -> bool
+    auto decryptAndLoadIgm = [&app](const QString &igmFile) -> bool
+    {
+        // 1. Apri e leggi il file cifrato
+        QFile f(igmFile);
+        if (f.open(QIODevice::ReadOnly) == false)
+            return false;
+        QByteArray encrypted = f.readAll();
+        f.close();
+
+        // 2. Decripta in memoria
+        SimpleCrypt crypto(Q_UINT64_C(0x6C74697665727365));
+        QByteArray decrypted = crypto.decryptToByteArray(encrypted);
+        if (crypto.lastError() != SimpleCrypt::ErrorNoError)
+            return false;
+
+        // 3. Leggi dal buffer in memoria (stesso flusso di slotLoadDocFromMemory)
+        QBuffer buf;
+        buf.setData(decrypted);
+        buf.open(QIODevice::ReadOnly);
+        QXmlStreamReader reader(&buf);
+
+        while (!reader.atEnd())
+        {
+            if (reader.readNext() == QXmlStreamReader::DTD)
+                break;
+        }
+        if (reader.hasError() || reader.dtdName() != KXMLQLCWorkspace)
+            return false;
+
+        // 4. Imposta il percorso workspace al file .igm originale
+        app.doc()->setWorkspacePath(QFileInfo(igmFile).absolutePath());
+
+        // 5. Carica il documento dalla memoria
+        if (app.loadXML(reader) == false)
+            return false;
+
+        // 6. Il file aperto rimane il percorso .igm originale
+        app.setFileName(igmFile);
+        app.doc()->resetModified();
+        return true;
+    };
+
+    auto openWorkspaceAndCloseStartup = [&app, &decryptAndLoadIgm](const QString &workspaceFile) -> bool
     {
         if (workspaceFile.isEmpty())
             return false;
@@ -409,7 +455,14 @@ static bool showStartupOpenWorkspaceDialog(App &app, bool forceDialog = false)
             return false;
 
         app.clearDocument();
-        if (app.loadXML(workspaceFile) != QFile::NoError)
+
+        bool loaded = false;
+        if (workspaceFile.endsWith(".igm", Qt::CaseInsensitive))
+            loaded = decryptAndLoadIgm(workspaceFile);
+        else
+            loaded = (app.loadXML(workspaceFile) == QFile::NoError);
+
+        if (loaded == false)
             return false;
 
         app.updateFileOpenMenu(workspaceFile);
@@ -442,7 +495,7 @@ static bool showStartupOpenWorkspaceDialog(App &app, bool forceDialog = false)
 
         folder.setFilter(QDir::Files | QDir::NoDotAndDotDot);
         folder.setSorting(QDir::Name);
-        folder.setNameFilters(QStringList() << "*.qxw" << "*.QXW");
+        folder.setNameFilters(QStringList() << "*.igm" << "*.IGM");
 
         QStringList files;
         const QFileInfoList entries = folder.entryInfoList();
@@ -516,13 +569,14 @@ static bool showStartupOpenWorkspaceDialog(App &app, bool forceDialog = false)
     };
 
     auto openWorkspaceFromSelection = [&app, &dialog, filesList, alwaysOpenSelectedCheck,
-                                       &selectedFolder, &startupSettings, &saveStartupSettings]() {
+                                       &selectedFolder, &startupSettings, &saveStartupSettings,
+                                       &decryptAndLoadIgm]() {
         QListWidgetItem *selectedItem = filesList->currentItem();
         if (selectedItem == nullptr)
         {
             QMessageBox::information(&dialog,
                                      QObject::tr("Nessun file"),
-                                     QObject::tr("Seleziona un file .qxw dall'elenco."));
+                                     QObject::tr("Seleziona un file .igm dall'elenco."));
             return;
         }
 
@@ -531,7 +585,14 @@ static bool showStartupOpenWorkspaceDialog(App &app, bool forceDialog = false)
             return;
 
         app.clearDocument();
-        if (app.loadXML(workspaceFile) == QFile::NoError)
+
+        bool loaded = false;
+        if (workspaceFile.endsWith(".igm", Qt::CaseInsensitive))
+            loaded = decryptAndLoadIgm(workspaceFile);
+        else
+            loaded = (app.loadXML(workspaceFile) == QFile::NoError);
+
+        if (loaded)
         {
             startupSettings.folderPath = selectedFolder;
             if (alwaysOpenSelectedCheck->isChecked())
@@ -587,7 +648,7 @@ static bool showStartupOpenWorkspaceDialog(App &app, bool forceDialog = false)
         openWorkspaceFromSelection();
     });
 
-    // If a folder is already stored, immediately show its .qxw list.
+    // If a folder is already stored, immediately show its .igm list.
     refreshWorkspaceList();
 
     dialog.adjustSize();
@@ -626,6 +687,14 @@ static void installStartupSettingsMenu(App &app)
         showStartupOpenWorkspaceDialog(app, true);
     });
     settingsMenu->addAction(settingsAction);
+
+    settingsMenu->addSeparator();
+    QAction *encryptAction = new QAction(QIcon(":/filesave.png"), QObject::tr("Cripta workspace..."), &app);
+    QObject::connect(encryptAction, &QAction::triggered, [&app]() {
+        EncryptWorkspaceDialog dlg(&app);
+        dlg.exec();
+    });
+    settingsMenu->addAction(encryptAction);
 
     settingsMenu->addSeparator();
     QAction *aboutAction = new QAction(QIcon(":/help.png"), QObject::tr("Chi siamo"), &app);
