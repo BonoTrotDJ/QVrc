@@ -689,14 +689,6 @@ static void installStartupSettingsMenu(App &app)
     settingsMenu->addAction(settingsAction);
 
     settingsMenu->addSeparator();
-    QAction *encryptAction = new QAction(QIcon(":/filesave.png"), QObject::tr("Cripta workspace..."), &app);
-    QObject::connect(encryptAction, &QAction::triggered, [&app]() {
-        EncryptWorkspaceDialog dlg(&app);
-        dlg.exec();
-    });
-    settingsMenu->addAction(encryptAction);
-
-    settingsMenu->addSeparator();
     QAction *aboutAction = new QAction(QIcon(":/help.png"), QObject::tr("Chi siamo"), &app);
     QObject::connect(aboutAction, &QAction::triggered, &app, &App::slotHelpAbout);
     settingsMenu->addAction(aboutAction);

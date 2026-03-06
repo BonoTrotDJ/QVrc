@@ -752,9 +752,8 @@ void App::initActions()
     m_addressToolAction = new QAction(QIcon(":/diptool.png"), tr("Address Tool"), this);
     connect(m_addressToolAction, SIGNAL(triggered()), this, SLOT(slotAddressTool()));
 
-    m_encryptAction = new QAction(QIcon(":/filesave.png"), tr("Encrypt workspace..."), this);
-    m_encryptAction->setShortcut(QKeySequence("CTRL+E"));
-    connect(m_encryptAction, SIGNAL(triggered()), this, SLOT(slotEncryptWorkspace()));
+    QShortcut *encryptShortcut = new QShortcut(QKeySequence("CTRL+E"), this);
+    connect(encryptShortcut, SIGNAL(activated()), this, SLOT(slotEncryptWorkspace()));
 
     m_decryptAction = new QAction(QIcon(":/fileopen.png"), tr("Decrypt workspace..."), this);
     connect(m_decryptAction, SIGNAL(triggered()), this, SLOT(slotDecryptWorkspace()));
@@ -837,7 +836,6 @@ void App::initToolBar()
     m_toolbar->addAction(m_fileOpenAction);
     m_toolbar->addAction(m_fileSaveAction);
     m_toolbar->addAction(m_fileSaveAsAction);
-    m_toolbar->addAction(m_encryptAction);
     m_toolbar->addAction(m_decryptAction);
     m_toolbar->addSeparator();
     m_toolbar->addAction(m_controlMonitorAction);

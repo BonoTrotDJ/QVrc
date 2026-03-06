@@ -194,7 +194,6 @@ private:
     QAction* m_modeToggleAction;
     QAction* m_controlMonitorAction;
     QAction* m_addressToolAction;
-    QAction* m_encryptAction;
     QAction* m_decryptAction;
     QAction* m_controlFullScreenAction;
     QAction* m_controlBlackoutAction;
