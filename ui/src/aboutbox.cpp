@@ -42,49 +42,15 @@ AboutBox::AboutBox(QWidget* parent) : QDialog (parent)
     if (version.isEmpty())
         version = APPVERSION;
     m_versionLabel->setText(version);
-    m_copyrightLabel->setText(QString("Copyright &copy; <B>Heikki Junnila, Massimo Callegari</B> %1")
-                              .arg(tr("and contributors:")));
-    m_websiteLabel->setText(tr("Website: %1").arg("<A HREF=\"https://www.qlcplus.org/\">https://www.qlcplus.org/</A>"));
+    m_copyrightLabel->setText(QString("Copyright &copy; <B>Imedia Group - Multiverse Controller</B>"));
+    m_websiteLabel->setText(tr("Website: %1").arg("<A HREF=\"https://www.imedia.it/\">https://www.imedia.it/</A>"));
     connect(m_websiteLabel, SIGNAL(linkActivated(QString)),
             this, SLOT(slotWebsiteClicked()));
 
     connect(m_contributors, SIGNAL(itemClicked(QListWidgetItem*)),
             this, SLOT(slotItemClicked()));
     m_contributors->clear();
-    m_contributors->addItem("Contributors:");
-    m_contributors->addItem("Jano Svitok");
-    m_contributors->addItem("David Garyga");
-    m_contributors->addItem(QString::fromUtf8("Lukas Jähn"));
-    m_contributors->addItem("Robert Box");
-    m_contributors->addItem("Thomas Achtner");
-    m_contributors->addItem("Joep Admiraal");
-    m_contributors->addItem("Oliver Ruempelein");
-    m_contributors->addItem("Jannis Achstetter");
-    m_contributors->addItem("Stefan Riemens");
-    m_contributors->addItem("Florian Euchner");
-    m_contributors->addItem("Bartosz Grabias");
-    m_contributors->addItem("NiKoyes");
-    m_contributors->addItem("Heiko Fanieng");
-    m_contributors->addItem("Raymond Van Laake");
-    m_contributors->addItem(QString::fromUtf8("Luis García Tornel"));
-    m_contributors->addItem("Jan Lachman");
-    m_contributors->addItem("Nuno Almeida");
-    m_contributors->addItem("Santiago Benejam Torres");
-    m_contributors->addItem(QString::fromUtf8("Jérôme Lebleu"));
-    m_contributors->addItem("Koichiro Saito");
-    m_contributors->addItem("Karri Kaksonen");
-    m_contributors->addItem("Stefan Krupop");
-    m_contributors->addItem("Nathan Durnan");
-    m_contributors->addItem("Giorgio Rebecchi");
-    m_contributors->addItem("Klaus Weidenbach");
-    m_contributors->addItem("Stefan Krumm");
-    m_contributors->addItem(QString::fromUtf8("Christian Sühs"));
-    m_contributors->addItem("Simon Newton");
-    m_contributors->addItem("Christopher Staite");
-    m_contributors->addItem("Lutz Hillebrand");
-    m_contributors->addItem("Matthew Jaggard");
-    m_contributors->addItem("Ptit Vachon");
-    m_contributors->addItem("Tolmino");
+    m_contributors->addItem("Imedia Group - Multiverse Controller");
 
     m_timer = new QTimer(this);
     connect(m_timer, SIGNAL(timeout()), this, SLOT(slotTimeout()));
@@ -120,5 +86,5 @@ void AboutBox::slotItemClicked()
 
 void AboutBox::slotWebsiteClicked()
 {
-    QDesktopServices::openUrl(QUrl("https://www.qlcplus.org/"));
+    QDesktopServices::openUrl(QUrl("https://www.imedia.it/"));
 }

@@ -10,7 +10,7 @@ set(CMAKE_AUTORCC ON)
 
 add_definitions(-DUNICODE)
 
-set(APPNAME "Q VRT Italia")
+set(APPNAME "Imedia Viewer")
 set(FXEDNAME "Fixture Definition Editor")
 
 if(ANDROID OR IOS)
