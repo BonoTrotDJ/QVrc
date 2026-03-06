@@ -28,7 +28,7 @@ CustomPopupDialog
 {
     id: popupRoot
     width: mainView.width / 2
-    title: "VRClub Italy"
+    title: "Imedia Group - Multiverse Controller"
     standardButtons: Dialog.Close
 
     contentItem:
@@ -52,9 +52,9 @@ CustomPopupDialog
                 linkColor: "#8AC800"
                 font.family: UISettings.robotoFontName
                 font.pixelSize: UISettings.textSizeDefault
-                text: "<h3>VRClub Italy<br>" + qlcplus.appVersion + "</h3>\n" +
+                text: "<h3>Imedia Viewer<br>" + qlcplus.appVersion + "</h3>\n" +
                       "<b>Versione Visual</b><br>" +
-                      "Copyright Ⓒ <b>VRClub Italy</b><br>" +
+                      "Copyright Ⓒ <b>Imedia Group - Multiverse Controller</b><br>" +
                       qsTr("Website") + ": <a href='https://www.vrclubitaly.it'>https://www.vrclubitaly.it</a><br>" +
                       "Facebook" + ": <a href='https://www.facebook.com/vrclubitaly/?locale=it_IT'>vrclubitaly</a><br>"
                 onLinkActivated: (link) => Qt.openUrlExternally(link)
