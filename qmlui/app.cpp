@@ -162,7 +162,7 @@ void App::startup()
     qmlRegisterType<FolderBrowser>("org.qlcplus.classes", 1, 0, "FolderBrowser");
 
     setTitle(APPNAME);
-    setIcon(QIcon(":/qlcplus.svg"));
+    setIcon(QIcon(":/qlcplus.png"));
 
     if (QFontDatabase::addApplicationFont(":/RobotoCondensed-Regular.ttf") < 0)
         qWarning() << "Roboto condensed cannot be loaded!";
@@ -939,7 +939,10 @@ QString App::encryptWorkspace(const QString &sourcePath, const QString &destPath
     QByteArray plainData = srcFile.readAll();
     srcFile.close();
 
-    SimpleCrypt crypto(Q_UINT64_C(0x4D756C74697665727365));
+    quint64 workspaceKey = 1469598103934665603ULL;
+    for (const char ch : QByteArrayLiteral("Multiverse"))
+        workspaceKey = (workspaceKey ^ quint8(ch)) * 1099511628211ULL;
+    SimpleCrypt crypto(workspaceKey);
     QByteArray encryptedData = crypto.encryptToByteArray(plainData);
 
     if (crypto.lastError() != SimpleCrypt::ErrorNoError)

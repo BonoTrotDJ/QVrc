@@ -1,6 +1,7 @@
 <RCC>
   <qresource prefix="/">
     <file alias="qmldir">qml/qmldir</file>
+    <file alias="qlcplus.png">../resources/icons/png/qlcplus.png</file>
 
     <!-- Common components -->
     <file alias="ActionsMenu.qml">qml/ActionsMenu.qml</file>

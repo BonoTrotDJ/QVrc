@@ -176,7 +176,7 @@ Rectangle
             {
                 id: actEntry
                 Layout.alignment: Qt.AlignTop
-                imgSource: "qrc:/qlcplus.svg"
+                imgSource: "qrc:/qlcplus.png"
                 entryText: qsTr("Actions")
                 onPressed: actionsMenu.open()
                 autoExclusive: false

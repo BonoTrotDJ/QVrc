@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Encrypt Workspace</string>
+   <string>Cripta File</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>

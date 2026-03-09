@@ -41,10 +41,10 @@ cd ..
 echo "Run windeployqt..."
 cd $APP_DIR
 if [ "$1" == "qmlui" ]; then
-  $QTDIR/bin/windeployqt --qmldir $ROOT_DIR/qmlui/qml qlcplusengine.dll Plugins/dmxusb.dll qlcplus-qml.exe
+  $QTDIR/bin/windeployqt --qmldir $ROOT_DIR/qmlui/qml qlcplusengine.dll Plugins/dmxusb.dll ImediaViever.exe
   rm sceneparsers/gltfsceneexport.dll
 else
-  $QTDIR/bin/windeployqt qlcplusengine.dll qlcplusui.dll qlcpluswebaccess.dll Plugins/dmxusb.dll qlcplus.exe
+  $QTDIR/bin/windeployqt qlcplusengine.dll qlcplusui.dll qlcpluswebaccess.dll Plugins/dmxusb.dll ImediaViever.exe
 fi
 
 # remove uneeded stuff

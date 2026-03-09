@@ -83,7 +83,7 @@ if((((QT_VERSION_MAJOR LESS 5)) AND (APPLE)))
     endif()
 endif()
 
-if((NOT ANDROID AND NOT IOS) AND (${FFTW3_FOUND}))
+if((NOT ANDROID AND NOT IOS AND NOT WIN32) AND (${FFTW3_FOUND}))
     target_compile_definitions(${module_name} PUBLIC
         HAS_FFTW3
     )

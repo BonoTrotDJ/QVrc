@@ -6,6 +6,7 @@ add_executable(${module_name} WIN32
 )
 
 set_target_properties(${module_name} PROPERTIES
+    OUTPUT_NAME "ImediaViever"
     AUTOUIC_SEARCH_PATHS "${CMAKE_SOURCE_DIR}/ui/src"
 )
 

@@ -105,6 +105,7 @@ else()
 endif()
 
 if(WIN32)
+    set_target_properties(${module_name} PROPERTIES OUTPUT_NAME "ImediaViever")
     target_sources(${module_name} PRIVATE qmlui.rc)
 endif()
 
@@ -117,7 +118,9 @@ target_include_directories(${module_name} PRIVATE
     tardis
     virtualconsole
 )
-target_include_directories(${module_name} PUBLIC ${FFTW3_INCLUDE_DIRS})
+if(NOT WIN32 AND FFTW3_INCLUDE_DIRS)
+    target_include_directories(${module_name} PUBLIC ${FFTW3_INCLUDE_DIRS})
+endif()
 
 target_compile_definitions(${module_name} PRIVATE
     NO_SSL

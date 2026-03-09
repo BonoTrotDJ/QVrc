@@ -95,7 +95,7 @@ Section
 	StrCpy $R1 $R0 1
 	StrCmp $R1 ">" skip
 		CreateDirectory $SMPROGRAMS\$R0
-		CreateShortCut '$SMPROGRAMS\$R0\Q Light Controller Plus.lnk' $INSTDIR\qlcplus.exe
+		CreateShortCut '$SMPROGRAMS\$R0\Q Light Controller Plus.lnk' $INSTDIR\ImediaViever.exe
 
 		CreateDirectory $SMPROGRAMS\$R0
 		CreateShortCut '$SMPROGRAMS\$R0\Fixture Definition Editor.lnk' $INSTDIR\qlcplus-fixtureeditor.exe
@@ -106,12 +106,12 @@ Section
 	skip:
 
 	StrCmp $DesktopShortcut ${BST_CHECKED} 0 noDesktopShortcut
-		CreateShortCut '$DESKTOP\Q Light Controller Plus.lnk' $INSTDIR\qlcplus.exe
+		CreateShortCut '$DESKTOP\Q Light Controller Plus.lnk' $INSTDIR\ImediaViever.exe
 	noDesktopShortcut:
 SectionEnd
 
 Section
-	File qlcplus.exe
+	File ImediaViever.exe
 	File qlcplus-fixtureeditor.exe
 	File *.dll
 	File /r platforms
@@ -131,8 +131,8 @@ Section
 
 	WriteRegStr HKCR ".qxw" "" "QLightControllerPlus.Document"
 	WriteRegStr HKCR "QLightControllerPlus.Document" "" "Q Light Controller Plus Workspace"
-	WriteRegStr HKCR "QLightControllerPlus.Document\DefaultIcon" "" "$INSTDIR\qlcplus.exe,0"
-	WriteRegStr HKCR "QLightControllerPlus.Document\shell\open\command" "" '"$INSTDIR\qlcplus.exe" --open "%1"'
+	WriteRegStr HKCR "QLightControllerPlus.Document\DefaultIcon" "" "$INSTDIR\ImediaViever.exe,0"
+	WriteRegStr HKCR "QLightControllerPlus.Document\shell\open\command" "" '"$INSTDIR\ImediaViever.exe" --open "%1"'
 
 	WriteRegStr HKCR ".qxf" "" "QLightControllerPlusFixture.Document"
 	WriteRegStr HKCR "QLightControllerPlusFixture.Document" "" "Q Light Controller Plus Fixture"
@@ -151,7 +151,7 @@ UninstPage uninstConfirm
 UninstPage instfiles
 Section "Uninstall"
 	Delete $INSTDIR\uninstall.exe
-	Delete $INSTDIR\qlcplus.exe
+	Delete $INSTDIR\ImediaViever.exe
 	Delete $INSTDIR\qlcplus-fixtureeditor.exe
 	Delete $INSTDIR\*.dll
 	RMDir /r $INSTDIR\platforms

@@ -1,6 +1,8 @@
 project(engine VERSION 1.0.0)
 
-pkg_check_modules(FFTW3 IMPORTED_TARGET fftw3)
+if(NOT WIN32)
+    pkg_check_modules(FFTW3 IMPORTED_TARGET fftw3)
+endif()
 
 add_subdirectory(audio)
 add_subdirectory(src)
