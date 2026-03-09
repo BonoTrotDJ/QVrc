@@ -30,7 +30,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>About Imedia Viewer</string>
+   <string>About Imedia Group</string>
   </property>
   <property name="windowIcon">
    <iconset resource="qlcui.qrc">

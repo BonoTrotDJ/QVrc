@@ -10,7 +10,7 @@ set(CMAKE_AUTORCC ON)
 
 add_definitions(-DUNICODE)
 
-set(APPNAME "Imedia Viewer")
+set(APPNAME "Imedia Group")
 set(FXEDNAME "Fixture Definition Editor")
 
 if(ANDROID OR IOS)

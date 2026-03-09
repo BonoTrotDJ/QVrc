@@ -52,7 +52,7 @@ CustomPopupDialog
                 linkColor: "#8AC800"
                 font.family: UISettings.robotoFontName
                 font.pixelSize: UISettings.textSizeDefault
-                text: "<h3>Imedia Viewer<br>" + qlcplus.appVersion + "</h3>\n" +
+                text: "<h3>Imedia Group<br>" + qlcplus.appVersion + "</h3>\n" +
                       "<b>Versione Visual</b><br>" +
                       "Copyright Ⓒ <b>Imedia Group - Multiverse Controller</b><br>" +
                       qsTr("Website") + ": <a href='https://www.vrclubitaly.it'>https://www.vrclubitaly.it</a><br>" +

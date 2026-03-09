@@ -38,6 +38,36 @@ if(mmedia_files)
     install(FILES ${mmedia_files} DESTINATION ${mmedia_path})
 endif()
 
+# Qt Multimedia FFmpeg backend runtime for Windows video playback
+if(QT_VERSION_MAJOR GREATER 5 AND CMAKE_PREFIX_PATH)
+    set(qt_prefix_path "${CMAKE_PREFIX_PATH}")
+    if(qt_prefix_path MATCHES ";")
+        list(GET CMAKE_PREFIX_PATH 0 qt_prefix_path)
+    endif()
+
+    get_filename_component(qt_prefix_path "${qt_prefix_path}" ABSOLUTE)
+    get_filename_component(qt_root_path "${qt_prefix_path}/../.." ABSOLUTE)
+    set(qt_bin_path "${qt_root_path}/bin")
+
+    set(qt_ffmpeg_runtime_files)
+    foreach(ffmpeg_dll
+            avcodec-60.dll
+            avformat-60.dll
+            avutil-58.dll
+            swresample-4.dll
+            swscale-7.dll)
+        if(EXISTS "${qt_bin_path}/${ffmpeg_dll}")
+            list(APPEND qt_ffmpeg_runtime_files "${qt_bin_path}/${ffmpeg_dll}")
+        else()
+            message(WARNING "Missing Qt FFmpeg runtime DLL: ${ffmpeg_dll} (searched in ${qt_bin_path})")
+        endif()
+    endforeach()
+
+    if(qt_ffmpeg_runtime_files)
+        install(FILES ${qt_ffmpeg_runtime_files} DESTINATION ${INSTALLROOT}/${BINDIR})
+    endif()
+endif()
+
 # NullSoft installer files
 set(nsis_path "${INSTALLROOT}/${DATADIR}")
 if(qmlui)

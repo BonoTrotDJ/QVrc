@@ -47,6 +47,28 @@ else
   $QTDIR/bin/windeployqt qlcplusengine.dll qlcplusui.dll qlcpluswebaccess.dll Plugins/dmxusb.dll ImediaViever.exe
 fi
 
+echo "Ensure FFmpeg runtime DLLs are bundled for video playback..."
+FFMPEG_DLLS=(
+  avcodec-60.dll
+  avformat-60.dll
+  avutil-58.dll
+  swresample-4.dll
+  swscale-7.dll
+)
+
+for dll in "${FFMPEG_DLLS[@]}"; do
+  if [ -f "$dll" ]; then
+    continue
+  fi
+
+  dll_path=$(find "$QTDIR" -type f -name "$dll" | head -n 1)
+  if [ -n "$dll_path" ]; then
+    cp "$dll_path" .
+  else
+    echo "Warning: missing $dll in $QTDIR. Video playback via FFmpeg may not work in the installer package."
+  fi
+done
+
 # remove uneeded stuff
 rm -rf generic networkinformation qmltooling renderplugins tls translations
 
