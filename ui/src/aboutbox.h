@@ -23,8 +23,6 @@
 #include <QDialog>
 #include "ui_aboutbox.h"
 
-class QTimer;
-
 /** @addtogroup ui UI
  * @{
  */
@@ -39,14 +37,7 @@ public:
     ~AboutBox();
 
 private slots:
-    void slotTimeout();
-    void slotItemClicked();
     void slotWebsiteClicked();
-
-private:
-    QTimer* m_timer;
-    int m_row;
-    int m_increment;
 };
 
 /** @} */

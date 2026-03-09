@@ -25,8 +25,6 @@
 #include "aboutbox.h"
 #undef protected
 
-#define CONTRIBCOUNT 34
-
 void AboutBox_Test::initial()
 {
     QWidget w;
@@ -40,52 +38,14 @@ void AboutBox_Test::initial()
     QCOMPARE(ab.m_versionLabel->text(), QString(APPVERSION));
 
     QVERIFY(ab.m_copyrightLabel != NULL);
-    QVERIFY(ab.m_copyrightLabel->text().contains("Copyright &copy; <B>Heikki Junnila, Massimo Callegari</B>"));
+    QVERIFY(ab.m_copyrightLabel->text().contains("Imedia Group - Multiverse Controller"));
 
     QVERIFY(ab.m_websiteLabel != NULL);
-    QVERIFY(ab.m_websiteLabel->text().contains("<A HREF=\"https://www.qlcplus.org/\">https://www.qlcplus.org/</A>"));
+    QVERIFY(ab.m_websiteLabel->text().contains("<A HREF=\"https://www.aicontroller.it/\">https://www.aicontroller.it/</A>"));
 
-    QVERIFY(ab.m_contributors != NULL);
-    QCOMPARE(ab.m_contributors->count(), CONTRIBCOUNT);
-
-    QVERIFY(ab.m_timer != NULL);
-    QCOMPARE(ab.m_row, -1);
-    QCOMPARE(ab.m_increment, 1);
-    QCOMPARE(ab.m_timer->interval(), 500);
-    QCOMPARE(ab.m_timer->isActive(), true);
-}
-
-void AboutBox_Test::slotTimeout()
-{
-    AboutBox ab(NULL);
-    ab.m_timer->stop();
-
-    QCOMPARE(ab.m_row, -1);
-    QCOMPARE(ab.m_increment, 1);
-
-    for (int i = 0; i <= CONTRIBCOUNT; i++)
-    {
-        ab.slotTimeout();
-        QCOMPARE(ab.m_row, i);
-        QCOMPARE(ab.m_increment, 1);
-    }
-
-    for (int i = CONTRIBCOUNT - 1; i > 0; i--)
-    {
-        ab.slotTimeout();
-        QCOMPARE(ab.m_row, i);
-        QCOMPARE(ab.m_increment, -1);
-    }
-}
-
-void AboutBox_Test::itemClick()
-{
-    AboutBox ab(NULL);
-    QVERIFY(ab.m_timer != NULL);
-    ab.slotItemClicked();
-    QVERIFY(ab.m_timer == NULL);
-    ab.slotItemClicked();
-    QVERIFY(ab.m_timer == NULL);
+    QVERIFY(ab.m_licenseLabel != NULL);
+    QVERIFY(ab.m_licenseLabel->text().contains("Questo sistema utilizza componenti open source"));
+    QVERIFY(ab.m_licenseLabel->text().contains("Apache 2.0"));
 }
 
 QTEST_MAIN(AboutBox_Test)
