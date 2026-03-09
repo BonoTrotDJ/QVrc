@@ -800,8 +800,7 @@ int main(int argc, char** argv)
         if (VirtualConsole::instance() != NULL && VirtualConsole::instance()->dockArea() != NULL)
             VirtualConsole::instance()->dockArea()->hide();
 
-        if (showStartupOpenWorkspaceDialog(app) == false)
-            return 0;
+        showStartupOpenWorkspaceDialog(app);
     }
     if (QLCArgs::operate == true)
         app.slotModeOperate();
