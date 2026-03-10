@@ -46,8 +46,6 @@
 #include <QMenuBar>
 #include <QMenu>
 #include <QAction>
-#include <QBuffer>
-#include <QXmlStreamReader>
 
 #include "ui_scelta_directory.h"
 #include "qlcconfig.h"
@@ -58,7 +56,6 @@
 #include "vcdockarea.h"
 #include "vcframe.h"
 #include "encryptworkspacedialog.h"
-#include "../qmlui/tardis/simplecrypt.h"
 
 #if defined(WIN32) || defined(__APPLE__)
   #include "debugbox.h"
@@ -203,6 +200,25 @@ void printUsage()
     cout << "  -wa or --web-auth\t\tEnable remote web access with users authentication" << endl;
     cout << "  -a or --web-auth-file <file>\tSpecify a file where to store web access basic authentication credentials" << endl;
     cout << endl;
+}
+
+static void enableDefaultWindowsLogging()
+{
+#if defined(WIN32) || defined(Q_OS_WIN)
+    if (QLCArgs::logToFile == true)
+        return;
+
+    QString logFilename = QCoreApplication::applicationDirPath() + QDir::separator() + "Imedia_Group.log";
+    QLCArgs::logToFile = true;
+    QLCArgs::debugLevel = QtWarningMsg;
+    QLCArgs::logFile.setFileName(logFilename);
+    if (!QLCArgs::logFile.open(QIODevice::Append))
+    {
+        QLCArgs::logToFile = false;
+        fprintf(stderr, "Could not open default log file: %s\n", qPrintable(logFilename));
+        fflush(stderr);
+    }
+#endif
 }
 
 /**
@@ -404,49 +420,7 @@ static bool showStartupOpenWorkspaceDialog(App &app, bool forceDialog = false)
         return true;
     };
 
-    auto decryptAndLoadIgm = [&app](const QString &igmFile) -> bool
-    {
-        // 1. Apri e leggi il file cifrato
-        QFile f(igmFile);
-        if (f.open(QIODevice::ReadOnly) == false)
-            return false;
-        QByteArray encrypted = f.readAll();
-        f.close();
-
-        // 2. Decripta in memoria
-        SimpleCrypt crypto(Q_UINT64_C(0x6C74697665727365));
-        QByteArray decrypted = crypto.decryptToByteArray(encrypted);
-        if (crypto.lastError() != SimpleCrypt::ErrorNoError)
-            return false;
-
-        // 3. Leggi dal buffer in memoria (stesso flusso di slotLoadDocFromMemory)
-        QBuffer buf;
-        buf.setData(decrypted);
-        buf.open(QIODevice::ReadOnly);
-        QXmlStreamReader reader(&buf);
-
-        while (!reader.atEnd())
-        {
-            if (reader.readNext() == QXmlStreamReader::DTD)
-                break;
-        }
-        if (reader.hasError() || reader.dtdName() != KXMLQLCWorkspace)
-            return false;
-
-        // 4. Imposta il percorso workspace al file .igm originale
-        app.doc()->setWorkspacePath(QFileInfo(igmFile).absolutePath());
-
-        // 5. Carica il documento dalla memoria
-        if (app.loadXML(reader) == false)
-            return false;
-
-        // 6. Il file aperto rimane il percorso .igm originale
-        app.setFileName(igmFile);
-        app.doc()->resetModified();
-        return true;
-    };
-
-    auto openWorkspaceAndCloseStartup = [&app, &decryptAndLoadIgm](const QString &workspaceFile) -> bool
+    auto openWorkspaceAndCloseStartup = [&app](const QString &workspaceFile) -> bool
     {
         if (workspaceFile.isEmpty())
             return false;
@@ -456,13 +430,7 @@ static bool showStartupOpenWorkspaceDialog(App &app, bool forceDialog = false)
 
         app.clearDocument();
 
-        bool loaded = false;
-        if (workspaceFile.endsWith(".igm", Qt::CaseInsensitive))
-            loaded = decryptAndLoadIgm(workspaceFile);
-        else
-            loaded = (app.loadXML(workspaceFile) == QFile::NoError);
-
-        if (loaded == false)
+        if (app.loadWorkspaceFile(workspaceFile) != QFile::NoError)
             return false;
 
         app.updateFileOpenMenu(workspaceFile);
@@ -495,7 +463,7 @@ static bool showStartupOpenWorkspaceDialog(App &app, bool forceDialog = false)
 
         folder.setFilter(QDir::Files | QDir::NoDotAndDotDot);
         folder.setSorting(QDir::Name);
-        folder.setNameFilters(QStringList() << "*.igm" << "*.IGM");
+        folder.setNameFilters(QStringList() << "*.igm" << "*.IGM" << "*.qxw" << "*.QXW");
 
         QStringList files;
         const QFileInfoList entries = folder.entryInfoList();
@@ -569,14 +537,13 @@ static bool showStartupOpenWorkspaceDialog(App &app, bool forceDialog = false)
     };
 
     auto openWorkspaceFromSelection = [&app, &dialog, filesList, alwaysOpenSelectedCheck,
-                                       &selectedFolder, &startupSettings, &saveStartupSettings,
-                                       &decryptAndLoadIgm]() {
+                                       &selectedFolder, &startupSettings, &saveStartupSettings]() {
         QListWidgetItem *selectedItem = filesList->currentItem();
         if (selectedItem == nullptr)
         {
             QMessageBox::information(&dialog,
                                      QObject::tr("Nessun file"),
-                                     QObject::tr("Seleziona un file .igm dall'elenco."));
+                                     QObject::tr("Seleziona un file .igm o .qxw dall'elenco."));
             return;
         }
 
@@ -586,13 +553,7 @@ static bool showStartupOpenWorkspaceDialog(App &app, bool forceDialog = false)
 
         app.clearDocument();
 
-        bool loaded = false;
-        if (workspaceFile.endsWith(".igm", Qt::CaseInsensitive))
-            loaded = decryptAndLoadIgm(workspaceFile);
-        else
-            loaded = (app.loadXML(workspaceFile) == QFile::NoError);
-
-        if (loaded)
+        if (app.loadWorkspaceFile(workspaceFile) == QFile::NoError)
         {
             startupSettings.folderPath = selectedFolder;
             if (alwaysOpenSelectedCheck->isChecked())
@@ -752,6 +713,8 @@ int main(int argc, char** argv)
     dir.cdUp();
     dir.cd("plugins");
     QApplication::setLibraryPaths(QStringList(dir.absolutePath()));
+#elif defined(WIN32) || defined(Q_OS_WIN)
+    QApplication::setLibraryPaths(QStringList(QApplication::applicationDirPath()));
 #endif
 
     QLCi18n::init();
@@ -762,6 +725,8 @@ int main(int argc, char** argv)
     /* Parse command-line arguments */
     if (parseArgs() == false)
         return 0;
+
+    enableDefaultWindowsLogging();
 
     /* Load translation for main application */
     QLCi18n::loadTranslation("qlcplus");

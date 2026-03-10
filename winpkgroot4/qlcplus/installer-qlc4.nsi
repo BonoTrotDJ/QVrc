@@ -115,8 +115,14 @@ Section
 	File qlcplus-fixtureeditor.exe
 	File *.dll
 	File /r platforms
+	File /r iconengines
 	File /r imageformats
+	File /r qml
+	File /r Meshes
+	File /r geometryloaders
 	File /r multimedia
+	File /r renderers
+	File /r sceneparsers
 	File /r styles
 	File Sample.qxw
 	File *.qm
@@ -155,8 +161,14 @@ Section "Uninstall"
 	Delete $INSTDIR\qlcplus-fixtureeditor.exe
 	Delete $INSTDIR\*.dll
 	RMDir /r $INSTDIR\platforms
+	RMDir /r $INSTDIR\iconengines
 	RMDir /r $INSTDIR\imageformats
+	RMDir /r $INSTDIR\qml
+	RMDir /r $INSTDIR\Meshes
+	RMDir /r $INSTDIR\geometryloaders
 	RMDir /r $INSTDIR\multimedia
+	RMDir /r $INSTDIR\renderers
+	RMDir /r $INSTDIR\sceneparsers
 	RMDir /r $INSTDIR\styles
 	Delete $INSTDIR\Sample.qxw
 	Delete $INSTDIR\*.qm

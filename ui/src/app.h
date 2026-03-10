@@ -244,6 +244,14 @@ public:
     void updateFileOpenMenu(QString addRecent);
 
     /**
+     * Load workspace contents from a file, decrypting it first when needed.
+     *
+     * @param fileName The name of the file to load from.
+     * @return QFile::NoError if successful.
+     */
+    QFile::FileError loadWorkspaceFile(const QString& fileName);
+
+    /**
      * Load workspace contents from a file with the given name.
      *
      * @param fileName The name of the file to load from.

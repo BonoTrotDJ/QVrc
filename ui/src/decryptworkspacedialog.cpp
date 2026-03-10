@@ -21,6 +21,28 @@
 
 #include <QFileDialog>
 #include <QFile>
+#include <QBuffer>
+#include <QXmlStreamReader>
+
+namespace
+{
+bool isWorkspaceXml(const QByteArray &xmlData)
+{
+    QBuffer buffer;
+    buffer.setData(xmlData);
+    if (buffer.open(QIODevice::ReadOnly) == false)
+        return false;
+
+    QXmlStreamReader reader(&buffer);
+    while (!reader.atEnd())
+    {
+        if (reader.readNext() == QXmlStreamReader::DTD)
+            break;
+    }
+
+    return reader.hasError() == false && reader.dtdName() == QStringLiteral("Workspace");
+}
+}
 
 DecryptWorkspaceDialog::DecryptWorkspaceDialog(QWidget *parent)
     : QDialog(parent)
@@ -42,7 +64,7 @@ void DecryptWorkspaceDialog::slotBrowseSource()
         this,
         tr("Open Encrypted Workspace"),
         QString(),
-        tr("QLC+ Workspace (*.qxw)")
+        tr("Encrypted Workspace (*.igm)")
     );
 
     if (!fileName.isEmpty())
@@ -89,6 +111,12 @@ void DecryptWorkspaceDialog::slotDecryptAndSave()
     if (crypto.lastError() != SimpleCrypt::ErrorNoError)
     {
         ui->m_statusLabel->setText(tr("Errore di decifratura. File non valido o chiave errata."));
+        return;
+    }
+
+    if (isWorkspaceXml(decrypted) == false)
+    {
+        ui->m_statusLabel->setText(tr("Il file decifrato non contiene un workspace XML valido."));
         return;
     }
 

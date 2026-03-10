@@ -55,6 +55,7 @@
 #include "qlcconfig.h"
 #include "qlcfile.h"
 #include "apputil.h"
+#include "../../qmlui/tardis/simplecrypt.h"
 
 #if defined(WIN32) || defined(Q_OS_WIN)
 #   include "hotplugmonitor.h"
@@ -1040,7 +1041,7 @@ QFile::FileError App::slotFileOpen()
 
     /* Append file filters to the dialog */
     QStringList filters;
-    filters << tr("Workspaces (*%1)").arg(KExtWorkspace);
+    filters << tr("Workspaces (*%1 *.igm)").arg(KExtWorkspace);
 #if defined(WIN32) || defined(Q_OS_WIN)
     filters << tr("All Files (*.*)");
 #else
@@ -1073,7 +1074,7 @@ QFile::FileError App::slotFileOpen()
 #endif
 
     /* Load the file */
-    QFile::FileError error = loadXML(fn);
+    QFile::FileError error = loadWorkspaceFile(fn);
     if (handleFileError(error) == true)
         m_doc->resetModified();
 
@@ -1387,7 +1388,7 @@ void App::slotRecentFileClicked(QAction *recent)
 #endif
 
     /* Load the file */
-    QFile::FileError error = loadXML(recentAbsPath);
+    QFile::FileError error = loadWorkspaceFile(recentAbsPath);
     if (handleFileError(error) == true)
         m_doc->resetModified();
 
@@ -1410,6 +1411,48 @@ void App::slotRecentFileClicked(QAction *recent)
 /*****************************************************************************
  * Load & Save
  *****************************************************************************/
+
+QFile::FileError App::loadWorkspaceFile(const QString& fileName)
+{
+    if (fileName.endsWith(".igm", Qt::CaseInsensitive) == false)
+        return loadXML(fileName);
+
+    QFile file(fileName);
+    if (file.open(QIODevice::ReadOnly) == false)
+        return QFile::OpenError;
+
+    const QByteArray encryptedData = file.readAll();
+    file.close();
+
+    SimpleCrypt crypto(Q_UINT64_C(0x6C74697665727365));
+    const QByteArray decryptedData = crypto.decryptToByteArray(encryptedData);
+    if (crypto.lastError() != SimpleCrypt::ErrorNoError)
+        return QFile::ReadError;
+
+    QBuffer buffer;
+    buffer.setData(decryptedData);
+    if (buffer.open(QIODevice::ReadOnly) == false)
+        return QFile::ReadError;
+
+    QXmlStreamReader doc(&buffer);
+    while (!doc.atEnd())
+    {
+        if (doc.readNext() == QXmlStreamReader::DTD)
+            break;
+    }
+
+    if (doc.hasError() || doc.dtdName() != KXMLQLCWorkspace)
+        return QFile::ReadError;
+
+    m_doc->setWorkspacePath(QFileInfo(fileName).absolutePath());
+
+    if (loadXML(doc) == false)
+        return QFile::ReadError;
+
+    setFileName(fileName);
+    m_doc->resetModified();
+    return QFile::NoError;
+}
 
 void App::setFileName(const QString& fileName)
 {

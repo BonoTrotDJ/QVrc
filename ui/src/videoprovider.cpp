@@ -117,6 +117,8 @@ VideoWidget::VideoWidget(Video *video, QObject *parent)
 
     connect(m_videoPlayer, SIGNAL(mediaStatusChanged(QMediaPlayer::MediaStatus)),
             this, SLOT(slotStatusChanged(QMediaPlayer::MediaStatus)));
+    connect(m_videoPlayer, &QMediaPlayer::errorChanged,
+            this, &VideoWidget::slotPlayerErrorChanged);
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     connect(m_videoPlayer, SIGNAL(metaDataChanged(QString,QVariant)),
             this, SLOT(slotMetaDataChanged(QString,QVariant)));
@@ -151,6 +153,17 @@ VideoWidget::VideoWidget(Video *video, QObject *parent)
         m_videoPlayer->setSource(QUrl::fromLocalFile(sourceURL));
 #endif
     qDebug() << "Video source URL:" << sourceURL;
+}
+
+void VideoWidget::slotPlayerErrorChanged()
+{
+    qWarning() << "[Video]" << m_videoPlayer->source().toString()
+               << "error" << m_videoPlayer->error()
+               << m_videoPlayer->errorString()
+               << "status" << m_videoPlayer->mediaStatus()
+               << "playback" << m_videoPlayer->playbackState()
+               << "hasAudio" << m_videoPlayer->hasAudio()
+               << "hasVideo" << m_videoPlayer->hasVideo();
 }
 
 void VideoWidget::shutdown()
@@ -343,6 +356,11 @@ void VideoWidget::slotPlaybackVideo()
         m_closeButton->show();
         m_closeButton->raise();
     }
+    qDebug() << "[Video] starting playback"
+             << m_videoPlayer->source().toString()
+             << "screen" << screen
+             << "geometry" << m_videoWidget->geometry()
+             << "fullscreen" << m_video->fullscreen();
     m_videoPlayer->play();
 }
 
@@ -381,7 +399,10 @@ void VideoWidget::slotBrightnessVolumeAdjust(qreal value)
 #else
     qreal linearVolume = QAudio::convertVolume(value, QAudio::LogarithmicVolumeScale, QAudio::LinearVolumeScale);
     if (m_audioOutput)
+    {
         m_audioOutput->setVolume(linearVolume);
+        qDebug() << "[Video] audio output volume set to" << linearVolume;
+    }
 #endif
 }
 

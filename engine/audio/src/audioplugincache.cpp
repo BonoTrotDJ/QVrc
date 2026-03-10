@@ -74,7 +74,10 @@ void AudioPluginCache::load(const QDir &dir)
 
     /* Check that we can access the directory */
     if (dir.exists() == false || dir.isReadable() == false)
+    {
+        qWarning() << "[AudioPluginCache] Plugin directory not accessible:" << dir.absolutePath();
         return;
+    }
 
     /* Loop through all files in the directory */
     QStringListIterator it(dir.entryList());
@@ -96,8 +99,11 @@ void AudioPluginCache::load(const QDir &dir)
             loader.unload();
         }
         else
-            qDebug() << "Failed to load plugin: " << loader.errorString();
+            qWarning() << "[AudioPluginCache] Failed to load plugin" << path
+                       << ":" << loader.errorString();
     }
+
+    qDebug() << "[AudioPluginCache] Loaded plugin priorities:" << m_pluginsMap.keys();
 }
 
 QStringList AudioPluginCache::getSupportedFormats()
@@ -112,6 +118,11 @@ QStringList AudioPluginCache::getSupportedFormats()
             ptr->initialize("");
             caps << ptr->supportedFormats();
             loader.unload();
+        }
+        else
+        {
+            qWarning() << "[AudioPluginCache] Could not inspect plugin" << path
+                       << ":" << loader.errorString();
         }
     }
 
@@ -134,11 +145,19 @@ AudioDecoder *AudioPluginCache::getDecoderForFile(const QString &filename)
             AudioDecoder* copy = qobject_cast<AudioDecoder*> (ptr->createCopy());
             if (copy->initialize(filename) == false)
             {
+                qWarning() << "[AudioPluginCache] Decoder rejected file" << filename
+                           << "plugin" << path;
                 loader.unload();
                 //delete copy;
                 continue;
             }
+            qDebug() << "[AudioPluginCache] Using decoder" << path << "for" << filename;
             return copy;
+        }
+        else
+        {
+            qWarning() << "[AudioPluginCache] Could not instantiate decoder plugin" << path
+                       << ":" << loader.errorString();
         }
     }
 

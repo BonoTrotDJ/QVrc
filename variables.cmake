@@ -10,6 +10,12 @@ set(CMAKE_AUTORCC ON)
 
 add_definitions(-DUNICODE)
 
+# Cross-compiling from Linux with CMAKE_SYSTEM_NAME=Windows doesn't always
+# populate WIN32 in CMake conditions the way this project expects.
+if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
+    set(WIN32 TRUE)
+endif()
+
 set(APPNAME "Imedia Group")
 set(FXEDNAME "Fixture Definition Editor")
 
@@ -477,7 +483,7 @@ execute_process(
     OUTPUT_VARIABLE QT_INSTALL_PLUGINS
 )
 
-if (UNIX AND NOT APPLE)
+if (UNIX AND NOT APPLE AND NOT WIN32)
     set(QTPREFIX "${QT_INSTALL_PREFIX}")
     string(FIND "${QTPREFIX}" "/usr" inUsr)
 

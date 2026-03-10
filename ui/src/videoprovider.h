@@ -42,6 +42,7 @@ protected slots:
     void slotSourceUrlChanged(QString url);
     void slotTotalTimeChanged(qint64 duration);
     void slotStatusChanged(QMediaPlayer::MediaStatus status);
+    void slotPlayerErrorChanged();
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     void slotMetaDataChanged(QString key, QVariant data);
 #else

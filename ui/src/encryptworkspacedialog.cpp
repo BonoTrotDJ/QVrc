@@ -22,6 +22,28 @@
 #include <QFileDialog>
 #include <QFile>
 #include <QMessageBox>
+#include <QBuffer>
+#include <QXmlStreamReader>
+
+namespace
+{
+bool isWorkspaceXml(const QByteArray &xmlData)
+{
+    QBuffer buffer;
+    buffer.setData(xmlData);
+    if (buffer.open(QIODevice::ReadOnly) == false)
+        return false;
+
+    QXmlStreamReader reader(&buffer);
+    while (!reader.atEnd())
+    {
+        if (reader.readNext() == QXmlStreamReader::DTD)
+            break;
+    }
+
+    return reader.hasError() == false && reader.dtdName() == QStringLiteral("Workspace");
+}
+}
 
 EncryptWorkspaceDialog::EncryptWorkspaceDialog(QWidget *parent)
     : QDialog(parent)
@@ -71,6 +93,12 @@ void EncryptWorkspaceDialog::slotEncryptAndSave()
     QByteArray data = srcFile.readAll();
     srcFile.close();
 
+    if (isWorkspaceXml(data) == false)
+    {
+        ui->m_statusLabel->setText(tr("The selected file is not a valid XML workspace."));
+        return;
+    }
+
     QString destFile = QFileDialog::getSaveFileName(
         this,
         tr("Save Encrypted Workspace"),
@@ -86,6 +114,11 @@ void EncryptWorkspaceDialog::slotEncryptAndSave()
 
     SimpleCrypt crypto(Q_UINT64_C(0x6C74697665727365));
     QByteArray encrypted = crypto.encryptToByteArray(data);
+    if (crypto.lastError() != SimpleCrypt::ErrorNoError)
+    {
+        ui->m_statusLabel->setText(tr("Encryption failed."));
+        return;
+    }
 
     QFile dstFile(destFile);
     if (!dstFile.open(QIODevice::WriteOnly))

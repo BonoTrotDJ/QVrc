@@ -144,6 +144,8 @@ void Audio::setTotalDuration(quint32 msec)
 
 bool Audio::setSourceFileName(QString filename)
 {
+    qDebug() << "[Audio] setSourceFileName" << filename;
+
     if (m_sourceFileName.isEmpty() == false)
     {
         // unload previous source
@@ -173,7 +175,11 @@ bool Audio::setSourceFileName(QString filename)
     m_decoder = m_doc->audioPluginCache()->getDecoderForFile(m_sourceFileName);
 
     if (m_decoder == NULL)
+    {
+        qWarning() << "[Audio] no decoder available for" << m_sourceFileName
+                   << "supported formats:" << m_doc->audioPluginCache()->getSupportedFormats();
         return false;
+    }
 
     setDuration(m_decoder->totalTime());
     setTotalDuration(m_decoder->totalTime());
@@ -368,7 +374,22 @@ void Audio::preRun(MasterTimer* timer)
         m_audio_out = new AudioRendererQt6(m_audioDevice, doc());
 #endif
         m_audio_out->setDecoder(m_decoder);
-        m_audio_out->initialize(ap.sampleRate(), ap.channels(), ap.format());
+        qDebug() << "[Audio] preRun"
+                 << "device" << m_audioDevice
+                 << "sampleRate" << ap.sampleRate()
+                 << "channels" << ap.channels()
+                 << "format" << ap.format();
+        if (m_audio_out->initialize(ap.sampleRate(), ap.channels(), ap.format()) == false)
+        {
+            qWarning() << "[Audio] renderer initialization failed for" << m_sourceFileName
+                       << "device" << m_audioDevice
+                       << "sampleRate" << ap.sampleRate()
+                       << "channels" << ap.channels()
+                       << "format" << ap.format();
+            delete m_audio_out;
+            m_audio_out = NULL;
+            return;
+        }
         m_audio_out->adjustIntensity(m_volume * getAttributeValue(Intensity));
         m_audio_out->setFadeIn(elapsed() ? 0 : fadeIn);
         m_audio_out->setLooped(runOrder() == Audio::Loop);

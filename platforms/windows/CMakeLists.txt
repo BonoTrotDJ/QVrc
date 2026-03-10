@@ -38,6 +38,10 @@ if(mmedia_files)
     install(FILES ${mmedia_files} DESTINATION ${mmedia_path})
 endif()
 
+if(SNDFILE_RUNTIME_DLL AND EXISTS "${SNDFILE_RUNTIME_DLL}")
+    install(FILES "${SNDFILE_RUNTIME_DLL}" DESTINATION ${INSTALLROOT}/${BINDIR})
+endif()
+
 # Qt Multimedia FFmpeg backend runtime for Windows video playback
 if(QT_VERSION_MAJOR GREATER 5 AND CMAKE_PREFIX_PATH)
     set(qt_prefix_path "${CMAKE_PREFIX_PATH}")
