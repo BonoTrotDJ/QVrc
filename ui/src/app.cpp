@@ -957,6 +957,9 @@ void App::updateFileOpenMenu(QString addRecent)
 {
     QSettings settings;
     QStringList menuRecentList;
+    auto isEncryptedWorkspace = [](const QString& path) {
+        return path.endsWith(".igm", Qt::CaseInsensitive);
+    };
 
     if (m_fileOpenMenu == NULL)
     {
@@ -973,11 +976,12 @@ void App::updateFileOpenMenu(QString addRecent)
 
     foreach (QAction* a, m_fileOpenMenu->actions())
     {
-        menuRecentList.append(a->text());
+        if (isEncryptedWorkspace(a->text()))
+            menuRecentList.append(a->text());
         m_fileOpenMenu->removeAction(a);
     }
 
-    if (addRecent.isEmpty() == false)
+    if (addRecent.isEmpty() == false && isEncryptedWorkspace(addRecent))
     {
         menuRecentList.removeAll(addRecent); // in case the string is already present, remove it...
         menuRecentList.prepend(addRecent); // and add it to the top
@@ -992,10 +996,11 @@ void App::updateFileOpenMenu(QString addRecent)
         for (int i = 0; i < MAX_RECENT_FILES; i++)
         {
             QVariant recent = settings.value(QString("%1%2").arg(SETTINGS_RECENTFILE).arg(i));
-            if (recent.isValid() == true)
+            if (recent.isValid() == true && isEncryptedWorkspace(recent.toString()))
             {
-                menuRecentList.append(recent.toString());
-                m_fileOpenMenu->addAction(menuRecentList.at(i));
+                const QString recentPath = recent.toString();
+                menuRecentList.append(recentPath);
+                m_fileOpenMenu->addAction(recentPath);
             }
         }
     }
@@ -1041,7 +1046,7 @@ QFile::FileError App::slotFileOpen()
 
     /* Append file filters to the dialog */
     QStringList filters;
-    filters << tr("Workspaces (*%1 *.igm)").arg(KExtWorkspace);
+    filters << tr("Encrypted Workspaces (*.igm)");
 #if defined(WIN32) || defined(Q_OS_WIN)
     filters << tr("All Files (*.*)");
 #else
@@ -1415,7 +1420,7 @@ void App::slotRecentFileClicked(QAction *recent)
 QFile::FileError App::loadWorkspaceFile(const QString& fileName)
 {
     if (fileName.endsWith(".igm", Qt::CaseInsensitive) == false)
-        return loadXML(fileName);
+        return QFile::OpenError;
 
     QFile file(fileName);
     if (file.open(QIODevice::ReadOnly) == false)

@@ -244,7 +244,7 @@ public:
     void updateFileOpenMenu(QString addRecent);
 
     /**
-     * Load workspace contents from a file, decrypting it first when needed.
+     * Load workspace contents from an encrypted .igm file.
      *
      * @param fileName The name of the file to load from.
      * @return QFile::NoError if successful.

@@ -463,7 +463,7 @@ static bool showStartupOpenWorkspaceDialog(App &app, bool forceDialog = false)
 
         folder.setFilter(QDir::Files | QDir::NoDotAndDotDot);
         folder.setSorting(QDir::Name);
-        folder.setNameFilters(QStringList() << "*.igm" << "*.IGM" << "*.qxw" << "*.QXW");
+        folder.setNameFilters(QStringList() << "*.igm" << "*.IGM");
 
         QStringList files;
         const QFileInfoList entries = folder.entryInfoList();
@@ -543,7 +543,7 @@ static bool showStartupOpenWorkspaceDialog(App &app, bool forceDialog = false)
         {
             QMessageBox::information(&dialog,
                                      QObject::tr("Nessun file"),
-                                     QObject::tr("Seleziona un file .igm o .qxw dall'elenco."));
+                                     QObject::tr("Seleziona un file .igm dall'elenco."));
             return;
         }
 
