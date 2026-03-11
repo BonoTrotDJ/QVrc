@@ -110,6 +110,7 @@ VideoWidget::VideoWidget(Video *video, QObject *parent)
     {
         m_videoWidget = new QVideoWidget;
         m_videoWidget->setStyleSheet("background-color:black;");
+        m_videoWidget->setAspectRatioMode(Qt::IgnoreAspectRatio);
         m_videoPlayer->setVideoOutput(m_videoWidget);
         m_videoWidget->installEventFilter(this);
         ensureCloseButton();
@@ -317,10 +318,13 @@ void VideoWidget::slotPlaybackVideo()
     {
         m_videoWidget = new QVideoWidget;
         m_videoWidget->setStyleSheet("background-color:black;");
+        m_videoWidget->setAspectRatioMode(Qt::IgnoreAspectRatio);
         m_videoPlayer->setVideoOutput(m_videoWidget);
         m_videoWidget->installEventFilter(this);
         ensureCloseButton();
     }
+
+    m_videoWidget->setAspectRatioMode(Qt::IgnoreAspectRatio);
 
     m_videoWidget->setWindowFlags(m_videoWidget->windowFlags() | Qt::WindowStaysOnTopHint);
     if (m_video->fullscreen() == false)
