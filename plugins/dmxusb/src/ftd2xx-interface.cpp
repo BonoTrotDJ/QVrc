@@ -21,6 +21,11 @@
 #include "ftd2xx-interface.h"
 #include "enttecdmxusbpro.h"
 
+#if defined(Q_OS_WIN) || defined(WIN32)
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#endif
+
 #include <ftd2xx.h>
 
 #define EEPROM_VID_OFFSET       1
@@ -141,9 +146,14 @@ QList<DMXInterface *> FTD2XXInterface::interfaces(QList<DMXInterface *> discover
     /* Find out the number of FTDI devices present */
     DWORD num = 0;
     FT_STATUS status = FT_CreateDeviceInfoList(&num);
-    if (status != FT_OK || num <= 0)
+    if (status != FT_OK)
     {
         qWarning() << Q_FUNC_INFO << "[FTD2XXInterface] Error in FT_CreateDeviceInfoList:" << status;
+        return interfacesList;
+    }
+    if (num <= 0)
+    {
+        qDebug() << Q_FUNC_INFO << "[FTD2XXInterface] No FTDI devices found";
         return interfacesList;
     }
 
@@ -435,6 +445,4 @@ uchar FTD2XXInterface::readByte(bool* ok)
 
     return 0;
 }
-
-
 

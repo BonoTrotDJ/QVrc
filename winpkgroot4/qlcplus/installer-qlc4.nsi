@@ -98,9 +98,6 @@ Section
 		CreateShortCut '$SMPROGRAMS\$R0\Imedia Group.lnk' $INSTDIR\ImediaViever.exe
 
 		CreateDirectory $SMPROGRAMS\$R0
-		CreateShortCut '$SMPROGRAMS\$R0\Fixture Definition Editor.lnk' $INSTDIR\qlcplus-fixtureeditor.exe
-
-		CreateDirectory $SMPROGRAMS\$R0
 		CreateShortCut '$SMPROGRAMS\$R0\Uninstall.lnk' $INSTDIR\uninstall.exe
 
 	skip:
@@ -112,8 +109,9 @@ SectionEnd
 
 Section
 	File ImediaViever.exe
-	File qlcplus-fixtureeditor.exe
 	File *.dll
+	Delete $INSTDIR\Plugins\usbdmx.dll
+	Delete $INSTDIR\Plugins\udmx.dll
 	File /r platforms
 	File /r iconengines
 	File /r imageformats
@@ -140,11 +138,6 @@ Section
 	WriteRegStr HKCR "ImediaGroup.Document\DefaultIcon" "" "$INSTDIR\ImediaViever.exe,0"
 	WriteRegStr HKCR "ImediaGroup.Document\shell\open\command" "" '"$INSTDIR\ImediaViever.exe" --open "%1"'
 
-	WriteRegStr HKCR ".qxf" "" "ImediaGroupFixture.Document"
-	WriteRegStr HKCR "ImediaGroupFixture.Document" "" "Imedia Group Fixture"
-	WriteRegStr HKCR "ImediaGroupFixture.Document\DefaultIcon" "" "$INSTDIR\qlcplus-fixtureeditor.exe,0"
-	WriteRegStr HKCR "ImediaGroupFixture.Document\shell\open\command" "" '"$INSTDIR\qlcplus-fixtureeditor.exe" --open "%1"'
-
 	WriteRegStr HKCU "SOFTWARE\ImediaGroup" "Install_Dir" "$INSTDIR"
 
 	WriteUninstaller $INSTDIR\uninstall.exe
@@ -158,8 +151,9 @@ UninstPage instfiles
 Section "Uninstall"
 	Delete $INSTDIR\uninstall.exe
 	Delete $INSTDIR\ImediaViever.exe
-	Delete $INSTDIR\qlcplus-fixtureeditor.exe
 	Delete $INSTDIR\*.dll
+	Delete $INSTDIR\Plugins\usbdmx.dll
+	Delete $INSTDIR\Plugins\udmx.dll
 	RMDir /r $INSTDIR\platforms
 	RMDir /r $INSTDIR\iconengines
 	RMDir /r $INSTDIR\imageformats
@@ -186,9 +180,6 @@ Section "Uninstall"
 
 	DeleteRegKey HKCR ".qxw"
 	DeleteRegKey HKCR "ImediaGroup.Document"
-
-	DeleteRegKey HKCR ".qxf"
-	DeleteRegKey HKCR "ImediaGroupFixture.Document"
 
 	; This will delete all settings
 	DeleteRegKey HKCU "Software\ImediaGroup"

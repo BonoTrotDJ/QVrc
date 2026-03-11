@@ -13,13 +13,12 @@ if(NOT ANDROID AND NOT IOS)
     pkg_check_modules(LIBOLA IMPORTED_TARGET libola)
     pkg_check_modules(LIBOLASERVER IMPORTED_TARGET libolaserver)
 
-    # In cross-build environments these plugins may require external SDKs/headers
-    # (e.g. ftd2xx/libusb) that are not always present.
-    if(NOT CMAKE_CROSSCOMPILING)
+    # Allow Windows cross-builds when the required SDK/runtime is provided.
+    if(NOT CMAKE_CROSSCOMPILING OR CMAKE_SYSTEM_NAME STREQUAL "Windows")
         add_subdirectory(dmxusb)
     endif()
     add_subdirectory(peperoni)
-    if(NOT CMAKE_CROSSCOMPILING)
+    if(NOT CMAKE_CROSSCOMPILING OR CMAKE_SYSTEM_NAME STREQUAL "Windows")
         add_subdirectory(udmx)
     endif()
     add_subdirectory(midi)
